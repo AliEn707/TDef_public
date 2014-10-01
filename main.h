@@ -29,7 +29,7 @@ struct bintree{
 typedef
 struct worklist{
 	int sock;
-	int id;
+	void * data;
 	struct worklist * next;
 } worklist;
 
