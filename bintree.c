@@ -1,6 +1,11 @@
-
-
 #include "main.h"
+
+
+/*
+╔══════════════════════════════════════════════════════════════╗
+║ 		functions for binary tree with data 			                       ║
+╚══════════════════════════════════════════════════════════════╝
+*/
 
 
 int bintreeAdd(bintree* root,int key,void* data){
@@ -38,7 +43,7 @@ void * bintreeGet(bintree* root, int key){
 }
 
 int _bintreeDel(bintree* root, int key){
-	bintree * get;
+	int get;
 	int next;
 	if (root==0)
 		return 0;
@@ -68,7 +73,7 @@ int _bintreeDel(bintree* root, int key){
 }
 
 int bintreeDel(bintree* root, int key){
-	bintree * get;
+	int get;
 	int next=key&1;
 	get=_bintreeDel(root->next[next],key>>1);
 	if (get!=0)

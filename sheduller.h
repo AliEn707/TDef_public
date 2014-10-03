@@ -1,4 +1,1 @@
-
-void * threadSheduller(void * arg);
-
-int startSheduller(int id);
+pthread_t startSheduller(int id);

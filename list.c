@@ -1,9 +1,16 @@
-
-
 #include "main.h"
 
 
-int worklistAdd(worklist * root, int id){
+/*
+╔══════════════════════════════════════════════════════════════╗
+║ 		functions for l1 list with data 				                       ║
+╚══════════════════════════════════════════════════════════════╝
+*/
+
+
+
+
+worklist * worklistAdd(worklist * root, int id){
 	worklist * tmp;
 	for(tmp=root;tmp->next!=0;tmp=tmp->next);
 	if ((tmp->next=malloc(sizeof(worklist)))==0){
@@ -12,10 +19,10 @@ int worklistAdd(worklist * root, int id){
 	}
 	memset(tmp->next,0,sizeof(worklist));
 	tmp->next->id=id;
-	return 1;
+	return tmp->next;
 }
 
-int worklistDel(worklist * root, int id){
+worklist * worklistDel(worklist * root, int id){
 	worklist* tmp, * tmp1;
 	for(tmp=root;tmp->next!=0;tmp=tmp->next)
 		if (tmp->next->id==id)
@@ -25,7 +32,7 @@ int worklistDel(worklist * root, int id){
 	tmp1=tmp->next;
 	tmp->next=tmp->next->next;
 	free(tmp1);
-	return 1;
+	return tmp;
 }
 
 void worklistErase(worklist* root){

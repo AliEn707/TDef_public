@@ -1,3 +1,1 @@
-int startWorker();
-
-int startListener();
+pthread_t startWorker(int id);

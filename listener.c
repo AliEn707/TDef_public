@@ -1,5 +1,13 @@
 #include "headers.h"
 
+
+/*
+╔══════════════════════════════════════════════════════════════╗
+║ thread listen sockets 							                       ║
+╚══════════════════════════════════════════════════════════════╝
+*/
+
+
 int startServer(port){
 	int listener;
 	struct sockaddr_in addr;
@@ -15,82 +23,84 @@ int startServer(port){
 	}
 	
 	if(bind(listener, (struct sockaddr *)&addr, sizeof(addr)) < 0){
-		perror("bind listene");
+		perror("bind listener");
 		return 0;
 	}
 	if(listen(listener, 1)<0){
-		perror("listen listene");
+		perror("listen listener");
 		return 0;
 	}
 	
 	return listener;
 }
 
-int getFreeWorker(){
-	int i;
-	int min,id=0;
-	min=config.worker[0].client_num;
-	for(i=1;i<WORKER_NUM;i++)
-		if (config.worker[i].client_num<min){
-			min=config.worker[i].client_num;
-			id=i;
-		}
-	return id;
-}
-
-
 void * threadListener(void * arg){
 	int max_fd;
-	struct sockaddr_in addr;
-	struct sembuf sem;
-	fd_set master;
+//	struct sockaddr_in addr;
+//	fd_set master;
 	fd_set read_fds;
-	struct timeval t={0,0};
-	int time;
+//	struct timeval t={0,0};
+//	int time;
 	printf("start Listener\n");
 	memset(&sem,0,sizeof(sem));
 	
-	time=1000/20;
-	config.listenet.sock=startServer(config.listener.port);
+//	time=1000/20;
+	//get sockets
+	config.serverworker.sock=startServer(config.serverworker.port);
 	config.player.sock=startServer(config.player.port);
-	max_fd=config.player.sock>config.listenet.sock?config.player.sock:config.listenet.sock;
-	
+	//need for select
+	max_fd=config.player.sock>config.serverworker.sock?config.player.sock:config.serverworker.sock;
 	while(config.run){
 		FD_ZERO(&read_fds);
-		FD_SET(config.listenet.sock, &read_fds);
+		FD_SET(config.serverworker.sock, &read_fds);
 		FD_SET(config.player.sock, &read_fds);
 		
 		if (select(max_fd+1, &read_fds, 0, 0, 0)){
-			if (FD_ISSET(config.listenet.sock, &read_fds){
-				
+			if (FD_ISSET(config.serverworker.sock, &read_fds)){
+				int sock;
+				worklist * tmp;
+				if((sock = accept(config.serverworker.sock, NULL, NULL))<0)
+					perror("accept listener");
+				config.serverworker.client_num++;
+				semop(config.serverworker.sem,&sem[0],1);
+					//add client to serverworker
+					tmp=worklistAdd(&config.serverworker.client,0);
+					tmp->sock=sock;
+				semop(config.serverworker.sem,&sem[1],1);
 				sleep(0);
 			}
 			
-			if (FD_ISSET(config.player.sock, &read_fds){
-				int id;
-				int w_id,sock;
+			if (FD_ISSET(config.player.sock, &read_fds)){
+//				int w_id;
+				int sock;
+				worklist * tmp;
 				if((sock = accept(config.player.sock, NULL, NULL))<0)
 					perror("accept listener");
-				if ((id=newPlayerId())<0){
-					close(sock);
-				}else{
-					worker=getFreeWorker();
-					config.worker[worker].client_num++;
-					//add player to config.player.tree
-					//add player to worklist of worker thread
-				}
+				config.watcher.client_num++;
+				semop(config.watcher.sem,&sem[0],1);
+					//add client to watcher
+					tmp=worklistAdd(&config.watcher.client,0);
+					tmp->sock=sock;
+				semop(config.watcher.sem,&sem[1],1);
 				sleep(0);
 			}
 		}
+		usleep(200);
 //		syncTime(*t,time);
 	}
 	printf("close Listener\n");
-	close(listener);
 	return 0;
 }
 
-int startListener(){
+pthread_t startListener(){
 	pthread_t th=0;
+	if((config.player.sem=semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
+		return 0;
+	semop(config.player.sem,&sem[2],1);
+	
+	if((config.serverworker.sem=semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
+		return 0;
+	semop(config.serverworker.sem,&sem[2],1);
 	
 	if(pthread_create(&th,0,threadListener,0)!=0)
 		return 0;
