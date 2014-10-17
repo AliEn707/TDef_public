@@ -4,6 +4,8 @@
 /*
 ╔══════════════════════════════════════════════════════════════╗
 ║ thread work with held tasks					                       ║
+║ created by Dennis Yarikov						                       ║
+║ sep 2014									                       ║
 ╚══════════════════════════════════════════════════════════════╝
 */
 
@@ -14,7 +16,7 @@ void * threadSheduller(void * arg){
 	message msg;
 	worklist * tmp;
 	free(arg);
-	printf("start Sheduller %d\n",id);
+	printf("Sheduller %d started\n",id);
 	while(config.run){
 		//check tasks
 		tmp=&config.sheduller.task;
@@ -30,7 +32,7 @@ void * threadSheduller(void * arg){
 //			printf("get message %s\n",msg.buf);
 			//some work
 //		}
-		printf("ok\n");
+//		printf("ok\n");
 		sleep(1);
 	}
 	printf("close Sheduller\n");
@@ -47,7 +49,7 @@ pthread_t startSheduller(int id){
 	
 	if((config.sheduller.sem=semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
 		return 0;
-	semop(config.sheduller.sem,&sem[2],1);
+	semop(config.sheduller.sem,&sem[1],1);
 	
 	if ((config.sheduller.msg=msgget(IPC_PRIVATE,IPC_CREAT|0700))==0)
 		return 0;

@@ -1,4 +1,6 @@
 
+int recvData(int sock, void * buf, int size);
+
 int newPlayerId();
 
 int delPlayerId(int id);

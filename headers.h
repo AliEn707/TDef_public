@@ -9,3 +9,6 @@
 #include "sheduller.h"
 #include "watcher.h"
 #include "serverworker.h"
+
+#include "room.h"
+#include "db.h"

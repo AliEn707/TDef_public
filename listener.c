@@ -4,6 +4,8 @@
 /*
 ╔══════════════════════════════════════════════════════════════╗
 ║ thread listen sockets 							                       ║
+║ created by Dennis Yarikov						                       ║
+║ sep 2014									                       ║
 ╚══════════════════════════════════════════════════════════════╝
 */
 
@@ -41,8 +43,9 @@ void * threadListener(void * arg){
 	fd_set read_fds;
 //	struct timeval t={0,0};
 //	int time;
-	printf("start Listener\n");
-	memset(&sem,0,sizeof(sem));
+	usleep(100);
+	printf("Listener started\n");
+//	memset(&sem,0,sizeof(sem));
 	
 //	time=1000/20;
 	//get sockets
@@ -76,16 +79,23 @@ void * threadListener(void * arg){
 				worklist * tmp;
 				if((sock = accept(config.player.sock, NULL, NULL))<0)
 					perror("accept listener");
+				printf("player connected\n");
 				config.watcher.client_num++;
+				printf("semval= %d\n",semctl(config.watcher.sem,1,GETVAL));
 				semop(config.watcher.sem,&sem[0],1);
 					//add client to watcher
-					tmp=worklistAdd(&config.watcher.client,0);
-					tmp->sock=sock;
+					if ((tmp=worklistAdd(&config.watcher.client,0))==0){
+						perror("worklistAdd Listener");
+						close(sock);
+					} else {
+						tmp->sock=sock;
+						printf("added to watcher\n");
+					}
 				semop(config.watcher.sem,&sem[1],1);
 				sleep(0);
 			}
 		}
-		usleep(200);
+		usleep(100);
 //		syncTime(*t,time);
 	}
 	printf("close Listener\n");
@@ -96,11 +106,11 @@ pthread_t startListener(){
 	pthread_t th=0;
 	if((config.player.sem=semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
 		return 0;
-	semop(config.player.sem,&sem[2],1);
+	semop(config.player.sem,&sem[1],1);
 	
-	if((config.serverworker.sem=semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
-		return 0;
-	semop(config.serverworker.sem,&sem[2],1);
+//	if((config.serverworker.sem=semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
+//		return 0;
+//	semop(config.serverworker.sem,&sem[1],1);
 	
 	if(pthread_create(&th,0,threadListener,0)!=0)
 		return 0;

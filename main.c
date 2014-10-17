@@ -1,5 +1,12 @@
 #include "headers.h"
 
+/*
+╔══════════════════════════════════════════════════════════════╗
+║ thread listen sockets 							                       ║
+║ created by Dennis Yarikov						                       ║
+║ sep 2014									                       ║
+╚══════════════════════════════════════════════════════════════╝
+*/
 
 
 int main(){
@@ -13,23 +20,29 @@ int main(){
 	//set params
 	srand(time(0));
 	config.run=1;
+	
+	config.serverworker.port=7000;
+	config.player.port=7001;
 	//set tasks for sheduller
 	
 	//start threads
 	config.sheduller.thread=startSheduller(0);
 	config.serverworker.thread=startServerWorker(0);
+	config.watcher.thread=startWatcher(0);
 	for(i=0;i<WORKER_NUM;i++)
 		config.worker[i].thread=startWorker(i);
-	
+	config.listener.thread=startListener();
 	//start console for external commands
 	
 	//some garbage					  
-	for(i=0;i<20;i++){
-		sprintf(msg.buf,"hello");
-		sendMsg(msg);
-		usleep((rand()%9)*100000);
-	}
-	
+//	for(i=0;i<20;i++){
+//		sprintf(msg.buf,"hello");
+//		sendMsg(msg);
+//		usleep((rand()%9)*100000);
+//	}
+	printf("done\n"); 
+	scanf("%s",msg.buf);
+	printf("exiting\n");
 	config.run=0;
 	sleep(5);
 	cleanAll();

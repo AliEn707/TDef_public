@@ -1,5 +1,31 @@
 #include "headers.h"
 
+/*
+╔══════════════════════════════════════════════════════════════╗
+║ 		main engine functions		 			                       ║
+║ created by Dennis Yarikov						                       ║
+║ sep 2014									                       ║
+╚══════════════════════════════════════════════════════════════╝
+*/
+
+
+int recvData(int sock, void * buf, int size){
+	int need=size;
+	int get;
+	get=recv(sock,buf,need,0);
+	if (get<0)
+		return -1;
+	if (get==need)
+		return get;
+//	printf("get not all\n");
+	while(need>0){
+		need-=get;
+		if((get=recv(sock,buf+(size-need),need,0))<0)
+			return 0;
+	}
+	return size;
+}
+
 int newPlayerId(){
 	int i;
 	for(i=1;i<PLAYER_MAX;i++)
@@ -22,7 +48,7 @@ void cleanAll(){
 		worklistErase(&config.worker[i].client);
 	}
 	
-	if (config.watcher.sem!=0)	
+	if (config.serverworker.sem!=0)	
 		if (semctl(config.serverworker.sem,0,IPC_RMID)<0)
 			perror("semctl serverworker");
 	worklistErase(&config.serverworker.client);

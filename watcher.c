@@ -2,7 +2,9 @@
 
 /*
 ╔══════════════════════════════════════════════════════════════╗
-║ thread watch for players add take auth add and del they                          ║
+║	 thread watch for players  take auth add and del them		 ║
+║ created by Dennis Yarikov						                       ║
+║ sep 2014									                       ║
 ╚══════════════════════════════════════════════════════════════╝
 */
 
@@ -20,27 +22,18 @@ int getFreeWorker(){
 
 
 int clientCheck(worklist * client){
+	int worker;
 	//new connect client
 	if (client->id==0){
+		printf("check new client\n");
 		//check auth
-		
+		player_info * pl=dbAuth(client);
 		//new client, not reconnect
-		if ((client->id=newPlayerId())<0){
-			//not have ids
-			close(client->sock);
-			return 1;
-		}else{
-			int worker=getFreeWorker();
+		if (pl!=0){
 			worklist * tmp;
-			player_info * pl;
-			if ((pl=malloc(sizeof(player_info)))==0){
-				perror("malloc player_info");
-				close(client->sock);
-				client->id=delPlayerId(client->id);
-				return 1;
-			}
+			worker=getFreeWorker();
 			//set player data, get from base
-			
+			setMask(pl->bitmask,BM_PLAYER_CONNECTED);
 			client->data=pl;
 			config.worker[worker].client_num++;
 			//add player to config.player.tree
@@ -57,12 +50,15 @@ int clientCheck(worklist * client){
 					tmp->id=client->id;
 					tmp->sock=client->sock;
 					tmp->data=client->data;
+					//keep player data in list to check in future
 				semop(config.worker[worker].sem,&sem[1],1);
 			semop(config.player.sem,&sem[1],1);
+		} else {
+			return 1;
 		}
 	} else{
 		//check connected client
-		
+//		printf("check connected client\n");
 	}
 	return 0;
 }
@@ -71,7 +67,8 @@ void * threadWatcher(void * arg){
 	int id=*(int*)arg;
 	worklist * tmp;
 	free(arg);
-	printf("start Watcher %d\n",id);
+	usleep(100);
+	printf("Watcher %d started\n",id);
 	
 	while(config.run){
 		tmp=&config.watcher.client;
@@ -92,7 +89,7 @@ void * threadWatcher(void * arg){
 pthread_t  startWatcher(int id){
 	pthread_t th=0;
 	int * arg;
-	struct sembuf sem={0,1,0};
+//	struct sembuf sem={0,1,0};
 	
 	if ((arg=malloc(sizeof(int)))==0)
 		perror("malloc startWatcher");
@@ -100,7 +97,7 @@ pthread_t  startWatcher(int id){
 	
 	if((config.watcher.sem=semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
 		return 0;
-	semop(config.watcher.sem,&sem,1);
+	semop(config.watcher.sem,&sem[1],1);
 	
 	if(pthread_create(&th,0,threadWatcher,arg)!=0)
 		return 0;

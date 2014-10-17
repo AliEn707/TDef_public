@@ -4,6 +4,8 @@
 /*
 ╔══════════════════════════════════════════════════════════════╗
 ║ thread wark with play rooms get statistics and other data                        ║
+║ created by Dennis Yarikov						                       ║
+║ sep 2014									                       ║
 ╚══════════════════════════════════════════════════════════════╝
 */
 
@@ -12,7 +14,7 @@ void * threadServerWorker(void * arg){
 	int id=*(int*)arg;
 	worklist * tmp;
 	free(arg);
-	printf("start ServerWorker %d\n",id);
+	printf("ServerWorker %d started\n",id);
 	
 	while(config.run){
 		tmp=&config.serverworker.client;
@@ -41,7 +43,7 @@ pthread_t  startServerWorker(int id){
 	
 	if((config.serverworker.sem=semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
 		return 0;
-	semop(config.serverworker.sem,&sem[2],1);
+	semop(config.serverworker.sem,&sem[1],1);
 	
 	if(pthread_create(&th,0,threadServerWorker,arg)!=0)
 		return 0;
