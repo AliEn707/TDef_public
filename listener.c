@@ -41,8 +41,10 @@ void * threadListener(void * arg){
 //	struct sockaddr_in addr;
 //	fd_set master;
 	fd_set read_fds;
-//	struct timeval t={0,0};
-//	int time;
+	int TPS=10;  //ticks per sec
+	struct timeval tv={0,0};
+	timePassed(&tv);
+	
 	usleep(100);
 	printf("Listener started\n");
 //	memset(&sem,0,sizeof(sem));
@@ -95,7 +97,7 @@ void * threadListener(void * arg){
 				sleep(0);
 			}
 		}
-		usleep(100);
+		syncTPS(timePassed(&tv),TPS);
 //		syncTime(*t,time);
 	}
 	printf("close Listener\n");

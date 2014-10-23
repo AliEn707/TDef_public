@@ -10,43 +10,83 @@
 */
 
 
-int proceedMessage(worklist* w,char msg_type){
+int proceedPlayerMessage(worklist* w,char msg_type){
 	player_info * pl=w->data;
-	int token;
-	if (msg_type==MESSAGE_CREATE_ROOM){
-//		printf("ask to create room\n");
-		//get another data
+//	int token;
+	char msg;
+	if (msg_type==MESSAGE_LOBBY){
+		int room_type;
+//		int room_token;
+		int room_id;
+		room * room;
+//		token=rand(); 
+		//get message type
+		recvData(w->sock,&msg,sizeof(msg));
+		//get room type
+		recvData(w->sock,&room_type,sizeof(room_type));
+		//get all data
 		
 		//if player not in lobby dont do anithing
 		if (pl->status!=PLAYER_IN_LOBBY)
+				return 0;
+		if (msg==MESSAGE_CREATE_ROOM){
+	//		printf("ask to create room\n");
+			//ask for room on server
+			
+			//-send ask, token
+			//if ok create, set server data
+			room=malloc(sizeof(room));
+			room->token=rand();//token;
+			room_id=roomAdd(room_type,room);
+			
+			pl->timestamp=time(0);
+			if (pl->room.id!=0)
+				roomLeave(pl->room.type,pl->room.id);
+			
+			pl->room.type=room_type;
+			pl->room.id=room_id;
+			roomEnter(pl->room.type,pl->room.id);
+			
+			pl->room.token=rand();
+			//set to prepare/ server worker then ask for room,
+			//when room will create, room server conn and set ROOM_RUN
+			room->status=ROOM_PREPARE;
+//			setMask(pl->bitmask,BM_PLAYER_TIMESTAMP);
 			return 0;
-		token=rand(); 
-		//ask for room on server
-		//-send ask, token
-		//if ok create, set server data
-		room_info * room=roomNew();
-		room->info->token=token;
-		
-		pl->timestamp=time(0);
-		pl->room.id=room;
-		pl->room.token=rand();
-//		setMask(pl->bitmask,BM_PLAYER_TIMESTAMP);
-		return 0;
-	}
-	if (msg_type==MESSAGE_FIND_ROOM){
-		//get another data
-		if (pl->status!=PLAYER_IN_LOBBY)
+		}
+		if (msg==MESSAGE_FAST_ROOM){
+			//find room
+			room_id=roomFind(room_type);
+			//check we find room
+			if (room_id==0){
+				//send no rooms found
+				return 0;
+			}
+			pl->timestamp=time(0);
+			if (pl->room.id!=0)
+				roomLeave(pl->room.type,pl->room.id);
+			
+			pl->room.type=room_type;
+			pl->room.id=room_id;
+			
+			roomEnter(pl->room.type,pl->room.id);
+			pl->room.token=rand();
+			pl->status=PLAYER_IN_GAME;
+			setMask(pl->bitmask,BM_PLAYER_STATUS);
+			//set token
 			return 0;
-		token=rand(); 
-		//find room
-		
-		//set token
-		//send data
-		return 0;
-	}
+		}
+		if (msg==MESSAGE_FIND_ROOM){ //not used
+			//find rooms
+			
+			//add something
+			
+			//set token
+			return 0;
+		}
+	}	
 	
-	
-	return 0;
+	return 1;
 }
 
 
@@ -59,15 +99,17 @@ int recvPlayerData(worklist* w){
 		if (recv(w->sock,&msg_type,sizeof(msg_type),MSG_DONTWAIT)<0){
 			//have error check what is it
 			if (errno==EAGAIN){
-				sleep(0);
-				continue;
+//				sleep(0);
+//				continue;
+				break;
 			}else{
 				perror("recv threadWorker");
 				return 1;
 			}
 		}
-		//get message need to proceed
-		proceedMessage(w,msg_type);
+		//get message need to proseed
+		if (proceedPlayerMessage(w,msg_type)!=0)
+			return 1;
 	}
 	
 	return 0;
@@ -75,21 +117,34 @@ int recvPlayerData(worklist* w){
 
 int checkPlayerData(worklist* w){
 	player_info * pl=w->data;
+	room * room;
 	if (pl->status==PLAYER_IN_LOBBY){
 //		printf("player in lobby\n");
 		//check player data
-		//set mask
+		if (pl->room.id!=0)
+			if (pl->timestamp<(room=roomGet(pl->room.type,pl->room.id))->timestamp)
+				if (room->status==ROOM_RUN){
+					pl->timestamp=room->timestamp;
+					pl->status=PLAYER_IN_GAME;
+					setMask(pl->bitmask,BM_PLAYER_STATUS);
+				}
+		//
 	}
 	//other places
 	return 0;
 }
 
 int sendPlayerData(worklist* w){
-	char msg_type;
+//	char msg_type;
 	player_info * pl=w->data;
 	if (checkMask(pl->bitmask,BM_PLAYER_CONNECTED)){
 		//send data to client
 		
+	}
+	sendData(w->sock,&pl->bitmask,sizeof(pl->bitmask));
+	if (checkMask(pl->bitmask,BM_PLAYER_STATUS)){
+		//send data to client
+		sendData(w->sock,&pl->status,sizeof(pl->status));
 	}
 	pl->bitmask=0;
 	return 0;
@@ -100,6 +155,9 @@ void * threadWorker(void * arg){
 	worklist * tmp;
 	worklist * task=&config.worker[id].client;
 	int worker_sem=config.worker[id].sem;
+	int TPS=10;  //ticks per sec
+	struct timeval tv={0,0};
+	timePassed(&tv);
 	free(arg);
 	printf("Worker %d started\n",id);
 	short err;
@@ -113,7 +171,7 @@ void * threadWorker(void * arg){
 				if (recvPlayerData(tmp)!=0){
 					err++;
 				}
-				//check changes of plyer
+				//check changes of player
 				checkPlayerData(tmp);
 				//send data to player if need
 				if (sendPlayerData(tmp)!=0){
@@ -121,12 +179,13 @@ void * threadWorker(void * arg){
 				}
 				if (err!=0){
 					//set player lost connection
-					//del from worklist
+					((player_info*)(tmp->data))->conn=FAIL;
+					tmp=worklistDel(task,tmp->id);
 				}
 			}
 		semop(worker_sem,&sem[1],1);
 		//some work
-		usleep(100);
+		syncTPS(timePassed(&tv),TPS);
 	}
 	printf("close Worker\n");
 	return 0;

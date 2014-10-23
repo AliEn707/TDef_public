@@ -23,11 +23,12 @@ int getFreeWorker(){
 
 int clientCheck(worklist * client){
 	int worker;
+	player_info * pl;
 	//new connect client
 	if (client->id==0){
 		printf("check new client\n");
 		//check auth
-		player_info * pl=dbAuth(client);
+		pl=dbAuth(client);
 		//new client, not reconnect
 		if (pl!=0){
 			worklist * tmp;
@@ -58,7 +59,13 @@ int clientCheck(worklist * client){
 		}
 	} else{
 		//check connected client
-//		printf("check connected client\n");
+		pl=client->data;
+		if (pl->conn==CONNECTED){
+			//all ok need to check client
+		}else{
+			//TODO: add counter
+			return -1;
+		}
 	}
 	return 0;
 }
@@ -66,6 +73,9 @@ int clientCheck(worklist * client){
 void * threadWatcher(void * arg){
 	int id=*(int*)arg;
 	worklist * tmp;
+	int TPS=10;  //ticks per sec
+	struct timeval tv={0,0};
+	timePassed(&tv);
 	free(arg);
 	usleep(100);
 	printf("Watcher %d started\n",id);
@@ -74,13 +84,16 @@ void * threadWatcher(void * arg){
 		tmp=&config.watcher.client;
 		semop(config.watcher.sem,&sem[0],1);
 			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
-				if (clientCheck(tmp)!=0)
+				if (clientCheck(tmp)!=0){
+					free(tmp->data);
 					tmp=worklistDel(&config.watcher.client,tmp->id);
+					printf("watcher del client\n");
+				}
 				//some work
 			}
 		semop(config.watcher.sem,&sem[1],1);
 		//some work
-		usleep(100);
+		syncTPS(timePassed(&tv),TPS);
 	}
 	printf("close Watcher\n");
 	return 0;

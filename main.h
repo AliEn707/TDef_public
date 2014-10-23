@@ -18,12 +18,18 @@
 #include <pthread.h>
 
 #define PLAYER_MAX 200000
-#define WORKER_NUM 2
+#define WORKER_NUM 1
 
 
 #define PLAYER_CONNECTED 2
 #define PLAYER_IN_LOBBY 2
 #define PLAYER_IN_GAME 3
+
+//room statuses
+#define ROOM_PREPARE 1 //wait for proceed
+#define ROOM_RUN 2	//allready played
+#define ROOM_FAIL 3	//cant create room
+#define ROOM_ERROR 3	//need to try create
 
 //player bitmasks
 #define BM_PLAYER_CONNECTED 1
@@ -34,8 +40,15 @@
 #define MESSAGE_DATA_CHANGE 1
 
 //in message types
+#define MESSAGE_LOBBY 1
+//room actions
 #define MESSAGE_CREATE_ROOM 99 //'c'
-#define MESSAGE_FIND_ROOM 2
+#define MESSAGE_FAST_ROOM 2
+#define MESSAGE_FIND_ROOM 4
+
+//messages from servers
+#define MESSAGE_ROOM_STATUS 1
+#define MESSAGE_ROOM_RESULT 2
 
 //connection
 #define CONNECTED 1
@@ -44,6 +57,8 @@
 
 typedef 
 struct {
+	int users;
+	int stat; //0 free, -1 need to del, 1 used
 	struct {
 		short max;
 		short current;
@@ -52,14 +67,10 @@ struct {
 	int server; //FIX ME
 	int timestamp;
 	int token;
+	int bitmask;
+	short status;
+	float timer;
 } room;
-
-typedef 
-struct {
-		room * info;  //must be first!!!
-		int users;
-		int stat; //0 for free, -1 need to del, 1 used
-} room_info;
 
 typedef
 struct {
@@ -91,7 +102,8 @@ struct {
 	struct {
 		int token;
 		//int port;  use id->info->port
-		room_info * id; //room that player attach
+		int type; //room that player attach
+		int id; //room that player attach
 	} room;
 	//base
 	int id;  //player id  from base ??
@@ -153,7 +165,7 @@ struct {
 #define getMsg(msg) msgrcv(config.sheduller.msg,&msg,sizeof(msg),0,MSG_NOERROR|IPC_NOWAIT)
 #define sendMsg(msg) msg.id=1;msgsnd(config.sheduller.msg,&msg,sizeof(msg),0);
 
-#define sendData(sock,x) if(send(sock,&x,sizeof(x),MSG_NOSIGNAL)<=0) return -1
+#define sendData(sock,x,y) if(send(sock,x,y,MSG_NOSIGNAL)<=0) return -1
 
 
 #define setMask(mask, p) (mask|=p)
@@ -163,5 +175,4 @@ struct {
 config_t config;
 struct sembuf sem[2];
 
-room_info rooms[PLAYER_MAX];
 

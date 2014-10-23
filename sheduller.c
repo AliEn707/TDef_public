@@ -15,6 +15,9 @@ void * threadSheduller(void * arg){
 	int id=*(int*)arg;
 	message msg;
 	worklist * tmp;
+	int TPS=1;  //ticks per sec
+	struct timeval tv={0,0};
+	timePassed(&tv);
 	free(arg);
 	printf("Sheduller %d started\n",id);
 	while(config.run){
@@ -33,7 +36,7 @@ void * threadSheduller(void * arg){
 			//some work
 //		}
 //		printf("ok\n");
-		sleep(1);
+		syncTPS(timePassed(&tv),TPS);
 	}
 	printf("close Sheduller\n");
 	return 0;

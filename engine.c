@@ -26,6 +26,25 @@ int recvData(int sock, void * buf, int size){
 	return size;
 }
 
+
+
+//time passed after previous call of function
+int timePassed(struct timeval * t){
+	//config.time  struct timeval
+	struct timeval end;
+	gettimeofday(&end, NULL);
+	int out=((end.tv_sec - t->tv_sec)*1000000+
+			end.tv_usec - t->tv_usec);
+	memcpy(t,&end,sizeof(end));
+	return out;
+}
+
+void syncTPS(int z,int TPS){
+	if((z=(1000000/TPS)-z)>0){
+		usleep(z);
+	}
+}
+
 int newPlayerId(){
 	int i;
 	for(i=1;i<PLAYER_MAX;i++)
@@ -71,7 +90,7 @@ void cleanAll(){
 	if (config.player.sem!=0)	
 		if (semctl(config.player.sem,0,IPC_RMID)<0)
 			perror("semctl player");
-	
+	bintreeErase(&config.player.tree);
 }
 
 /*

@@ -26,8 +26,8 @@ int main(){
 	//set tasks for sheduller
 	
 	//start threads
-	config.sheduller.thread=startSheduller(0);
-	config.serverworker.thread=startServerWorker(0);
+//	config.sheduller.thread=startSheduller(0);
+//	config.serverworker.thread=startServerWorker(0);
 	config.watcher.thread=startWatcher(0);
 	for(i=0;i<WORKER_NUM;i++)
 		config.worker[i].thread=startWorker(i);
