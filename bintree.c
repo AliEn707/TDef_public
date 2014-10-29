@@ -13,6 +13,7 @@
 int bintreeAdd(bintree* root,int key,void* data){
 	bintree* tmp=root;
 	int next;
+	printf("add key %d\n",key);
 	while(key>0){
 		next=(int)(key&1);
 		if(tmp->next[next]==0){

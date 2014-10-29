@@ -83,7 +83,7 @@ void * threadListener(void * arg){
 					perror("accept listener");
 				printf("player connected\n");
 				config.watcher.client_num++;
-				printf("semval= %d\n",semctl(config.watcher.sem,1,GETVAL));
+//				printf("semval= %d\n",semctl(config.watcher.sem,1,GETVAL));
 				semop(config.watcher.sem,&sem[0],1);
 					//add client to watcher
 					if ((tmp=worklistAdd(&config.watcher.client,0))==0){
@@ -91,7 +91,7 @@ void * threadListener(void * arg){
 						close(sock);
 					} else {
 						tmp->sock=sock;
-						printf("added to watcher\n");
+//						printf("added to watcher\n");
 					}
 				semop(config.watcher.sem,&sem[1],1);
 				sleep(0);

@@ -22,15 +22,17 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 //		token=rand(); 
 		//get message type
 		recvData(w->sock,&msg,sizeof(msg));
+		printf("get mes %d\n",msg);
 		//get room type
 		recvData(w->sock,&room_type,sizeof(room_type));
+		printf("get room type %d\n",room_type);
 		//get all data
 		
 		//if player not in lobby dont do anithing
 		if (pl->status!=PLAYER_IN_LOBBY)
 				return 0;
 		if (msg==MESSAGE_CREATE_ROOM){
-	//		printf("ask to create room\n");
+			printf("ask to create room\n");
 			//ask for room on server
 			
 			//-send ask, token
@@ -93,7 +95,7 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 int recvPlayerData(worklist* w){
 	int i;
 	char msg_type;
-//	player_info * pl=w->data;
+//	printf("try to get message\n");
 	//try to read message from client 10 times
 	for(i=0;i<10;i++){
 		if (recv(w->sock,&msg_type,sizeof(msg_type),MSG_DONTWAIT)<0){
@@ -105,11 +107,13 @@ int recvPlayerData(worklist* w){
 			}else{
 				perror("recv threadWorker");
 				return 1;
-			}
+			}			
+		}else{
+			printf("got message %d\n",msg_type);
+			//get message need to proseed
+			if (proceedPlayerMessage(w,msg_type)!=0)
+				return 1;
 		}
-		//get message need to proseed
-		if (proceedPlayerMessage(w,msg_type)!=0)
-			return 1;
 	}
 	
 	return 0;
@@ -121,13 +125,22 @@ int checkPlayerData(worklist* w){
 	if (pl->status==PLAYER_IN_LOBBY){
 //		printf("player in lobby\n");
 		//check player data
-		if (pl->room.id!=0)
-			if (pl->timestamp<(room=roomGet(pl->room.type,pl->room.id))->timestamp)
-				if (room->status==ROOM_RUN){
-					pl->timestamp=room->timestamp;
-					pl->status=PLAYER_IN_GAME;
-					setMask(pl->bitmask,BM_PLAYER_STATUS);
-				}
+		if (pl->room.id!=0){
+			room=roomGet(pl->room.type,pl->room.id);
+			printf("get get room %d \n",(int)room);
+			if (room!=0){
+				if (pl->timestamp<room->timestamp)
+					if (room->status==ROOM_RUN){
+						pl->timestamp=room->timestamp;
+						pl->status=PLAYER_IN_GAME;
+						setMask(pl->bitmask,BM_PLAYER_STATUS);
+					}
+			}else{
+				//set player not chose room
+				pl->room.id=0;
+				//set player status not in lobby
+			}
+		}
 		//
 	}
 	//other places
@@ -169,15 +182,18 @@ void * threadWorker(void * arg){
 				err=0;
 				//get data from player if any
 				if (recvPlayerData(tmp)!=0){
+//					printf("cant recv\n");
 					err++;
 				}
 				//check changes of player
 				checkPlayerData(tmp);
 				//send data to player if need
 				if (sendPlayerData(tmp)!=0){
+//					printf("cant send\n");
 					err++;
 				}
 				if (err!=0){
+//					printf("lost connection\n");
 					//set player lost connection
 					((player_info*)(tmp->data))->conn=FAIL;
 					tmp=worklistDel(task,tmp->id);

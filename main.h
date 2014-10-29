@@ -12,6 +12,7 @@
 #include <sys/shm.h>
 #include <sys/msg.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <time.h>
@@ -28,7 +29,7 @@
 //room statuses
 #define ROOM_PREPARE 1 //wait for proceed
 #define ROOM_RUN 2	//allready played
-#define ROOM_FAIL 3	//cant create room
+#define ROOM_FAIL 0	//cant create room
 #define ROOM_ERROR 3	//need to try create
 
 //player bitmasks
@@ -40,7 +41,8 @@
 #define MESSAGE_DATA_CHANGE 1
 
 //in message types
-#define MESSAGE_LOBBY 1
+#define MESSAGE_LOBBY 76//'L'
+
 //room actions
 #define MESSAGE_CREATE_ROOM 99 //'c'
 #define MESSAGE_FAST_ROOM 2
@@ -70,6 +72,9 @@ struct {
 	int bitmask;
 	short status;
 	float timer;
+	
+	int id;
+	int type;
 } room;
 
 typedef

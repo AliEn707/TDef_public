@@ -10,31 +10,104 @@
 */
 
 
-int checkRoomStatus(room * r){
+static int connSendRecv(char * hostname,int port, void * mes, int $mes){
+	int sockfd,n;
+	struct sockaddr_in servaddr;
+	struct hostent *server;
+	char mes_;
+	if (hostname==0)
+		return -1;
+	server = gethostbyname(hostname);
+	if (server == NULL) {
+		perror("gethostbyname");
+		return -1;
+	}
+	
+	if((sockfd=socket(AF_INET,SOCK_STREAM,0))<0){
+		perror("socket");
+		return -1;
+	}
+	
+	memset(&servaddr,0,sizeof(servaddr));
+	servaddr.sin_family = AF_INET;
+	memcpy((char *)server->h_addr,(char *)&servaddr.sin_addr.s_addr, server->h_length);
+//	servaddr.sin_addr.s_addr=inet_addr("172.16.1.40");//argv[1]);
+	servaddr.sin_port=htons(port);
+
+	if(connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr))<0){
+		perror("connect");
+		return -2;
+	}	
+	
+	sendData(sockfd,mes,$mes);
+		
+	n=recv(sockfd,mes_,sizeof(mes_),0);
+	if (n<0)
+		return -1;
+	else
+		if (n>0)
+			return n;
+	return 0;
+}
+
+
+static int checkRoomStatus(room * r){
 	float Dt=0.1;
+	struct {char type;int token;} message;
+	memset(&message,0,sizeof(message));
 	if(r->stat>0){
 		if (r->status==ROOM_PREPARE){
 			if (r->timer>0)
 				r->timer-=Dt;
 			else{
+				message.type='n'; //'n' for get new room
+				message.token=r->token;
 				//ask for room $_$
+				int $_$;
+				int _$_;
+				printf("try to get room\n");
+				//try to find free server
+				for($_$=serversGetNum();$_$>0;$_$--)
+					if ((_$_=connSendRecv(serverGetById($_$),
+								serversGetPortById($_$),
+								&message,
+								sizeof(message)))<=0){
+						if (_$_<0){
+							serversSetFail($_$);
+						}else{
+							return 0;
+						}
+					}
+					printf("cant get room\n");
+				r->status=ROOM_FAIL;
+				return 0;
 			}
 		}
 		if (r->status==ROOM_ERROR){
-				//ask for room
+			//ask for room
+		}
+		if (r->status==ROOM_FAIL){
+			//mark for del
+			r->stat=-1;
 		}
 	}
-/*	if(r->stat<0){
+	//room need to del
+	if(r->stat<0){
+		//room is free
 		if (r->users==0){
-			free(r);
-			memset(&r,0,sizeof(room_info));
+			room* _r;
+			//remove room
+			_r=roomRem(r->type,r->id);
+			if (_r!=0){
+				printf("room removed\n");
+				free(_r);
+			}
 		}
 	}
-*/	
 	return 0;
 }
 
-int proceedServerMessage(worklist* w,char msg_type){
+static int proceedServerMessage(worklist* w,char msg_type){
 //	char msg;
 	if (msg_type==MESSAGE_ROOM_STATUS){ //packet [mes(char)token(int)status(short)]
 		int token;
@@ -58,7 +131,7 @@ int proceedServerMessage(worklist* w,char msg_type){
 	return 0;
 }
 
-int recvServerData(worklist* w){
+static int recvServerData(worklist* w){
 	int i;
 	char msg_type;
 //	player_info * pl=w->data;
@@ -91,6 +164,7 @@ void * threadServerWorker(void * arg){
 	struct timeval tv={0,0};
 	timePassed(&tv);
 	free(arg);
+	serversLoad();
 	printf("ServerWorker %d started\n",id);
 	
 	while(config.run){

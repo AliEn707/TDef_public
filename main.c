@@ -8,6 +8,12 @@
 ╚══════════════════════════════════════════════════════════════╝
 */
 
+/*
+You can often see in this code $_$. 
+$_$ is the Scrooge_McDuck. 
+He help us in this not simple work. 
+*/
+
 
 int main(){
 	int i;
@@ -27,7 +33,7 @@ int main(){
 	
 	//start threads
 //	config.sheduller.thread=startSheduller(0);
-//	config.serverworker.thread=startServerWorker(0);
+	config.serverworker.thread=startServerWorker(0);
 	config.watcher.thread=startWatcher(0);
 	for(i=0;i<WORKER_NUM;i++)
 		config.worker[i].thread=startWorker(i);

@@ -39,12 +39,13 @@ player_info * dbAuth(worklist * client){
 	//get name 
 	name$=rand();
 	//send salt
-	send(client->sock,&name$,sizeof(name$),MSG_NOSIGNAL);//short
-	
+	if (send(client->sock,&name$,sizeof(name$),MSG_NOSIGNAL)<=0)
+		return 0;
+//	printf("prepare to get data\n");
 	//get name size
 	if (recvData(client->sock,&name$,sizeof(name$))<0)
 		return 0;
-	printf("get size of name %d",name$);
+	printf("get size of name %d\n",name$);
 	if (name$!=0){
 		if (recvData(client->sock,name,name$)<0) //change to anblock try to get
 			return 0;
@@ -65,8 +66,7 @@ player_info * dbAuth(worklist * client){
 		close(client->sock);
 		client->id=delPlayerId(client->id);
 		return 0;
-	}
-	
+	}	
 	return pl;
 }
 

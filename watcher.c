@@ -32,6 +32,7 @@ int clientCheck(worklist * client){
 		//new client, not reconnect
 		if (pl!=0){
 			worklist * tmp;
+			printf("auth ok\n");
 			worker=getFreeWorker();
 			//set player data, get from base
 			setMask(pl->bitmask,BM_PLAYER_CONNECTED);
@@ -43,18 +44,19 @@ int clientCheck(worklist * client){
 					perror("bintreeAdd player_info");
 					close(client->sock);
 					client->id=delPlayerId(client->id);
-					return 1;
+				}else{
+					semop(config.worker[worker].sem,&sem[0],1);
+						//add player to worklist of worker thread
+						tmp=worklistAdd(&config.worker[worker].client,0);
+						tmp->id=client->id;
+						tmp->sock=client->sock;
+						tmp->data=client->data;
+						//keep player data in list to check in future
+					semop(config.worker[worker].sem,&sem[1],1);
 				}
-				semop(config.worker[worker].sem,&sem[0],1);
-					//add player to worklist of worker thread
-					tmp=worklistAdd(&config.worker[worker].client,0);
-					tmp->id=client->id;
-					tmp->sock=client->sock;
-					tmp->data=client->data;
-					//keep player data in list to check in future
-				semop(config.worker[worker].sem,&sem[1],1);
 			semop(config.player.sem,&sem[1],1);
 		} else {
+			printf("bad auth\n");
 			return 1;
 		}
 	} else{
@@ -64,6 +66,7 @@ int clientCheck(worklist * client){
 			//all ok need to check client
 		}else{
 			//TODO: add counter
+			printf("problem with status\n");
 			return -1;
 		}
 	}
@@ -85,6 +88,7 @@ void * threadWatcher(void * arg){
 		semop(config.watcher.sem,&sem[0],1);
 			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
 				if (clientCheck(tmp)!=0){
+					bintreeDel(&config.player.tree,tmp->id);
 					free(tmp->data);
 					tmp=worklistDel(&config.watcher.client,tmp->id);
 					printf("watcher del client\n");

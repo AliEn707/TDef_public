@@ -11,4 +11,5 @@
 #include "serverworker.h"
 
 #include "room.h"
+#include "servers.h"
 #include "db.h"
