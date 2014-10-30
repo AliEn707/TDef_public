@@ -29,6 +29,7 @@ int clientCheck(worklist * client){
 		printf("check new client\n");
 		//check auth
 		pl=dbAuth(client);
+		printf("client id= %d\n",client->id);
 		//new client, not reconnect
 		if (pl!=0){
 			worklist * tmp;
@@ -88,6 +89,7 @@ void * threadWatcher(void * arg){
 		semop(config.watcher.sem,&sem[0],1);
 			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
 				if (clientCheck(tmp)!=0){
+					delPlayerId(tmp->id);
 					bintreeDel(&config.player.tree,tmp->id);
 					free(tmp->data);
 					tmp=worklistDel(&config.watcher.client,tmp->id);

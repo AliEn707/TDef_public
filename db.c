@@ -14,7 +14,7 @@
 //check player auth and create player_info struct or ret 0
 player_info * dbAuth(worklist * client){
 	player_info * pl;
-	int name$;
+	int $name;
 	char name[50];
 	char passwd[50];
 	memset(name,0,sizeof(name));
@@ -37,30 +37,36 @@ player_info * dbAuth(worklist * client){
 	pl->conn=CONNECTED;
 //	pl->id=client->id;
 	//get name 
-	name$=rand();
+	$name=rand();
 	//send salt
-	if (send(client->sock,&name$,sizeof(name$),MSG_NOSIGNAL)<=0)
+	if (send(client->sock,&$name,sizeof($name),MSG_NOSIGNAL)<=0)
 		return 0;
 //	printf("prepare to get data\n");
 	//get name size
-	if (recvData(client->sock,&name$,sizeof(name$))<0)
+	if (recvData(client->sock,&$name,sizeof($name))<0)
 		return 0;
-	printf("get size of name %d\n",name$);
-	if (name$!=0){
-		if (recvData(client->sock,name,name$)<0) //change to anblock try to get
+	printf("get size of name %d\n",$name);
+	if ($name!=0){
+		if (recvData(client->sock,name,$name)<0) //change to anblock try to get
 			return 0;
 		printf("get name %s\n",name);
 		if (recvData(client->sock,passwd,SIZE_OF_PASSWD)<0)
 			return 0;
 		printf("get passwd %s\n",passwd);
-	}else
+	}else {
+		//something strange
+		//set first char of name to 0 if error 
 		*name=0;
+	}
 	//check auth
-	if (0){
+	if ($name==0){
 		close(client->sock);
 		client->id=delPlayerId(client->id);
 		return 0;
 	}
+	//send first char of name
+	if (send(client->sock,&$name,sizeof($name),MSG_NOSIGNAL)<=0)
+		return 0;
 	//get data from db
 	if (gbGetPlayer(pl, name)!=0){
 		close(client->sock);

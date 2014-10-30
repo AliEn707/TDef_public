@@ -38,10 +38,11 @@
 #define BM_PLAYER_TIMESTAMP 4
 
 //out message types
-#define MESSAGE_DATA_CHANGE 1
+#define MESSAGE_PLAYER_CHANGE 1
 
 //in message types
 #define MESSAGE_LOBBY 76//'L'
+#define MESSAGE_MOVE 77//'M'
 
 //room actions
 #define MESSAGE_CREATE_ROOM 99 //'c'

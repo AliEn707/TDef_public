@@ -48,8 +48,10 @@ void syncTPS(int z,int TPS){
 int newPlayerId(){
 	int i;
 	for(i=1;i<PLAYER_MAX;i++)
-		if (config.player.ids[i]==0)
+		if (config.player.ids[i]==0){
+			config.player.ids[i]++;
 			return i;
+		}
 	return -1;
 }
 

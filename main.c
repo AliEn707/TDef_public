@@ -11,7 +11,7 @@
 /*
 You can often see in this code $_$. 
 $_$ is the Scrooge_McDuck. 
-He help us in this not simple work. 
+He helps us in this not simple work. 
 */
 
 

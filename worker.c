@@ -14,6 +14,14 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 	player_info * pl=w->data;
 //	int token;
 	char msg;
+	if (msg_type==MESSAGE_MOVE){
+		recvData(w->sock,&msg,sizeof(msg));
+		if (msg_type==MESSAGE_LOBBY){
+			pl->status=PLAYER_IN_LOBBY;
+			setMask(pl->bitmask,BM_PLAYER_STATUS);
+		}
+		return 0;
+	}
 	if (msg_type==MESSAGE_LOBBY){
 		int room_type;
 //		int room_token;
@@ -150,10 +158,19 @@ int checkPlayerData(worklist* w){
 int sendPlayerData(worklist* w){
 //	char msg_type;
 	player_info * pl=w->data;
+	char mes;
+	if (pl->bitmask==0)
+		return 0;
+	mes=MESSAGE_PLAYER_CHANGE;
+	sendData(w->sock,&mes,sizeof(mes));
+//	printf("send mes %d",mes);
+	//correct bitmask
 	if (checkMask(pl->bitmask,BM_PLAYER_CONNECTED)){
 		//send data to client
-		
+		setMask(pl->bitmask,BM_PLAYER_STATUS);
 	}
+//	printf("send bitmask %d",pl->bitmask);
+	//send bitmask
 	sendData(w->sock,&pl->bitmask,sizeof(pl->bitmask));
 	if (checkMask(pl->bitmask,BM_PLAYER_STATUS)){
 		//send data to client

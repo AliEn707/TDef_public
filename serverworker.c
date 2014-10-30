@@ -41,7 +41,7 @@ static int connSendRecv(char * hostname,int port, void * mes, int $mes){
 	
 	sendData(sockfd,mes,$mes);
 		
-	n=recv(sockfd,mes_,sizeof(mes_),0);
+	n=recv(sockfd,&mes_,sizeof(mes_),0);
 	if (n<0)
 		return -1;
 	else
