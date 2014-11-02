@@ -12,4 +12,5 @@
 
 #include "room.h"
 #include "servers.h"
+#include "events.h"
 #include "db.h"

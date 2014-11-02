@@ -13,7 +13,7 @@ You can often see in this code $_$.
 $_$ is the Scrooge_McDuck. 
 He helps us in this not simple work. 
 */
-
+//Time.now.to_i in ruby to get time() val
 
 int main(){
 	int i;
@@ -29,6 +29,8 @@ int main(){
 	
 	config.serverworker.port=7000;
 	config.player.port=7001;
+						  
+	dbFillEvents();
 	//set tasks for sheduller
 	
 	//start threads

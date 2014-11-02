@@ -19,11 +19,13 @@ player_info * dbAuth(worklist * client){
 	char passwd[50];
 	memset(name,0,sizeof(name));
 	memset(passwd,0,sizeof(passwd));
-	if ((client->id=newPlayerId())<0){
+	if ((newPlayerId())<0){
 		//not have ids
 		close(client->sock);
 		return 0;
 	}
+	client->id=rand();
+	printf("client id = %d",client->id);
 	if ((pl=malloc(sizeof(player_info)))==0){
 		perror("malloc player_info");
 		close(client->sock);
@@ -33,7 +35,7 @@ player_info * dbAuth(worklist * client){
 	memset(pl,0,sizeof(player_info));
 	
 	pl->bitmask=0;
-	pl->status=PLAYER_CONNECTED;
+//	pl->status=PLAYER_CONNECTED;
 	pl->conn=CONNECTED;
 //	pl->id=client->id;
 	//get name 
@@ -89,6 +91,15 @@ int dbGetServer(){
 }
 
 int dbFillServers(){
+	return 0;
+}
+
+static int events_timestamp=0; 
+int dbFillEvents(){
+	//do some stuff
+	eventAdd(1);
+	
+	events_timestamp=time(0);
 	return 0;
 }
 

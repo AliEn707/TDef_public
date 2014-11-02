@@ -46,17 +46,24 @@ void syncTPS(int z,int TPS){
 }
 
 int newPlayerId(){
-	int i;
+/*	int i;
 	for(i=1;i<PLAYER_MAX;i++)
 		if (config.player.ids[i]==0){
 			config.player.ids[i]++;
 			return i;
 		}
+*/
+	if (config.$players<PLAYER_MAX){
+		config.$players++;
+		return 1;
+	}
 	return -1;
 }
 
 int delPlayerId(int id){
-	config.player.ids[id]=0;
+	
+//	config.player.ids[id]=0;
+	config.$players--;
 	return -1;
 }
 

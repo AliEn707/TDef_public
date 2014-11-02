@@ -4,6 +4,8 @@
 #include <cstdio>
 #include <cstdlib>
 
+
+
 /*
 ╔══════════════════════════════════════════════════════════════╗
 ║ contaners for storing room data					                       ║
@@ -42,6 +44,8 @@ struct {
 
 	#include "main.h"
 	#include "room.h"
+	#include "events.h"
+
 	
 	room * roomGet (int key1, int key2) { //TODO: make this useful
 		if (rooms_map.find(key1) == rooms_map.end() || rooms_map[key1].find(key2) ==rooms_map[key1].end()) {
@@ -61,6 +65,7 @@ struct {
 				continue;
 			}
 			rooms_map[key][randomIndex] = value;
+			eventRoomAdd(key);
 			return randomIndex;
 		}
 	}
@@ -70,6 +75,7 @@ struct {
 			if (i->first == key2) {
 				room * tmp = (room *) i->second;
 				rooms_map[key1].erase(i);
+				eventRoomDel(key1);
 				return tmp; //removed
 			}
 		return NULL; //no such element

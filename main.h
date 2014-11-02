@@ -21,10 +21,12 @@
 #define PLAYER_MAX 200000
 #define WORKER_NUM 1
 
-
-#define PLAYER_CONNECTED 2
+//player statuses
+#define PLAYER_CONNECTED 1
+#define PLAYER_NONE 0
 #define PLAYER_IN_LOBBY 2
 #define PLAYER_IN_GAME 3
+#define PLAYER_AT_MAP 4
 
 //room statuses
 #define ROOM_PREPARE 1 //wait for proceed
@@ -39,11 +41,17 @@
 
 //out message types
 #define MESSAGE_PLAYER_CHANGE 1
-
+#define MESSAGE_EVENT_CHANGE 2
+//
+#define MESSAGE_CREATED 2
+#define MESSAGE_CHANGED 2
+#define MESSAGE_DELETED 2
 //in message types
-#define MESSAGE_LOBBY 76//'L'
-#define MESSAGE_MOVE 77//'M'
-
+#define MESSAGE_ROOM_ACT 76//'L' ask for add or edit rooms
+#define MESSAGE_MOVE 77//'M'  ask for change status
+//move actions
+#define MESSAGE_LOBBY 78 //N  move to lobby
+#define MESSAGE_MAP 77 //M  move to map
 //room actions
 #define MESSAGE_CREATE_ROOM 99 //'c'
 #define MESSAGE_FAST_ROOM 2
@@ -102,7 +110,7 @@ typedef
 struct {
 	//not base
 	short conn;  //connection status
-	short status;  //player status (location, ...)
+//	short status;  //player status (location, ...)
 	int bitmask;  
 	int timestamp;  //need for sync checks
 	struct {
@@ -119,7 +127,7 @@ struct {
 typedef 
 struct {
 	short run;
-	
+	int $players;
 	struct{
 		int sock;
 		int port;//players connect port
