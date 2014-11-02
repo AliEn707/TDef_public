@@ -37,6 +37,7 @@ extern "C" {
 			if ((e=(event*)malloc(sizeof(event)))==0)
 				return 0;
 			memset(e,0,sizeof(event));
+			e->id=_key;
 			e->timestamp=time(0);
 			events[_key] = e;
 		}

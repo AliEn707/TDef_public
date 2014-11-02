@@ -65,7 +65,10 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 			
 			//-send ask, token
 			//if ok create, set server data
-			room=malloc(sizeof(room));
+			if ((room=malloc(sizeof(room)))==0){
+				perror("malloc create room");
+				return 0;
+			}
 			room->token=rand();//token;
 			room_id=roomAdd(room_type,room);
 			
