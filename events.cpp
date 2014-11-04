@@ -52,22 +52,33 @@ extern "C" {
 	}
 	
 	int eventDel(int id){
-		//add some stuff
-		return 0;
+		map <int, event * >::iterator it = events.find(id);
+		if (it != events.end()) {
+			free(it->second);
+			events.erase(it);
+			return 0;
+		}
+		return 1;
 	}
 	
 	int eventRoomAdd(int id){
-		//add some stuff
-		events[id]->timestamp=time(0);
-		events[id]->$rooms++;
-		return 0;
+		map <int, event * >::iterator it = events.find(id);
+		if (it != events.end()) {
+			events[id]->timestamp=time(0);
+			events[id]->$rooms++;
+			return 0;
+		}
+		return 1;
 	}
 	
 	int eventRoomDel(int id){
-		//add some stuff
-		events[id]->timestamp=time(0);
-		events[id]->$rooms--;		
-		return 0;
+		map <int, event * >::iterator it = events.find(id);
+		if (it != events.end()) {		
+			events[id]->timestamp=time(0);
+			events[id]->$rooms--;		
+			return 0;
+		}
+		return 1;
 	}
 	
 	int eventForEach(void * p, int(f)(void*,event*)){
