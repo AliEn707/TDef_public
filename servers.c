@@ -10,7 +10,7 @@ struct {
 	short status;
 } servers[40];
 
-static int $servers;
+static int _servers;
 
 int serversLoad(){
 	FILE* file;
@@ -19,20 +19,20 @@ int serversLoad(){
 		return 0;
 	}
 	memset(servers,0,sizeof(servers));
-	$servers=0;
+	_servers=0;
 	while(!feof(file)){
-		fscanf(file,"%s %d\n",$servers[servers].hostname,&servers[$servers].port);
-		servers[$servers].status=1;
-		$servers++;
+		fscanf(file,"%s %d\n",_servers[servers].hostname,&servers[_servers].port);
+		servers[_servers].status=1;
+		_servers++;
 	}
 	
 	fclose(file);
 	printf("Servers updated\n");
-	return $servers;	
+	return _servers;	
 }
 
 int serversGetNum(){
-	return $servers;
+	return _servers;
 }
 
 void serversSetFail(int id){

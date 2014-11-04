@@ -9,6 +9,24 @@
 */
 
 
+int _sendData(int sock, void * buf, int size){
+	int need=size;
+	int get;
+	get=send(sock,buf,need,MSG_NOSIGNAL);
+	if (get<=0)
+		return get;
+	if (get==need)
+		return get;
+	printf("send not all\n");
+	while(need>0){
+		need-=get;
+		if((get=send(sock,buf+(size-need),need,MSG_NOSIGNAL))<=0)
+			return get;
+	}
+	return size;
+}
+
+
 int recvData(int sock, void * buf, int size){
 	int need=size;
 	int get;
