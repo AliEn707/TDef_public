@@ -4,10 +4,14 @@ struct {
 	int id;
 	int timestamp;
 	int $rooms;
+	char name[20];
+	char map[20];
 } event;
 
 
 event * eventAdd(int id);
+
+event * eventGet(int id);
 
 int eventDel(int id);
 

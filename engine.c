@@ -38,6 +38,7 @@ int recvData(int sock, void * buf, int size){
 //	printf("get not all\n");
 	while(need>0){
 		need-=get;
+//		printf("try to get\n");
 		if((get=recv(sock,buf+(size-need),need,0))<0)
 			return 0;
 	}

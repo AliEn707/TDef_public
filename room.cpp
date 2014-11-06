@@ -46,6 +46,18 @@ struct {
 	#include "room.h"
 	#include "events.h"
 
+//for debug
+	int fff (room *r) {
+		cout <<"type "<< r->type << 
+			" token " << r->token<<
+			" pl cur "<< r->players.current << 
+			" pl max " << r->players.max << endl;
+		return 0;
+	}
+	
+	void printRooms() {
+		 roomCheckAll(fff);
+	}
 	
 	room * roomGet (int key1, int key2) { //TODO: make this useful
 		if (rooms_map.find(key1) == rooms_map.end() || rooms_map[key1].find(key2) ==rooms_map[key1].end()) {
@@ -78,10 +90,12 @@ struct {
 				eventRoomDel(key1);
 				return tmp; //removed
 			}
+//		perror("room not rem");
 		return NULL; //no such element
 	}
 	//find rand room by key
 	int roomFind(int key) {//ADD: param to search - free slots
+		printRooms();
 		if (rooms_map[key].size()== 0)
 			return 0;
 		vector<int> temp;
@@ -93,16 +107,7 @@ struct {
 		return temp[rand()%temp.size()];
 	}
 	
-		
-//for debug
-	int fff (room *r) {
-		cout << r->players.current << " " << r->players.max << endl;
-		return 0;
-	}
-	void printRooms() {
-		 roomCheckAll(fff);
-	}
-	
+			
 	//check room for to be full
 	int roomFullCheck(room * value) {
 		return value->players.current < value->players.max;
@@ -130,10 +135,12 @@ struct {
 	}*/
 	
 	room* roomGetByToken(int t){//TODO: FIX
+		cout<<"token"<< t << "\n";
 		for (it_big i = rooms_map.begin(); i != rooms_map.end(); i++)
 			for (it j = rooms_map[i->first].begin(); j != rooms_map[i->first].end(); j++)
 				if (((room*)j->second)->token == t)
 					return (room*)j->second;
+//		perror("room not find by token");
 		return NULL;
 	}
 	

@@ -14,6 +14,7 @@
 static int checkEvent(void * n_n,event* e){
 	worklist* w=n_n;
 	player_info * pl=w->data;
+	short l_l;
 	char mes;
 	if (pl->timestamp<e->timestamp){
 		//do some stuff
@@ -21,6 +22,10 @@ static int checkEvent(void * n_n,event* e){
 		sendData(w->sock,&mes,sizeof(mes));
 		sendData(w->sock,&e->id,sizeof(e->id));
 		sendWorker(&e->$rooms,sizeof(e->$rooms));
+		l_l=strlen(e->map);
+		sendWorker(&l_l,sizeof(l_l));
+		sendWorker(e->map,l_l);
+		
 		//add another data
 	}//TODO: how to send data about remove
 	return 0;
@@ -46,7 +51,7 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 		int room_type;
 //		int room_token;
 		int room_id;
-		room * room;
+		room * r_r;
 //		token=rand(); 
 		//get message type
 		recvData(w->sock,&msg,sizeof(msg));
@@ -65,37 +70,50 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 			
 			//-send ask, token
 			//if ok create, set server data
-			if ((room=malloc(sizeof(room)))==0){
+			if ((r_r=malloc(sizeof(room)))==0){
 				perror("malloc create room");
 				return 0;
 			}
-			room->token=rand();//token;
-			room_id=roomAdd(room_type,room);
+			memset(r_r,0,sizeof(room));
+			r_r->token=rand();//token;
+			printf("token %d\n",r_r->token);
+			room_id=roomAdd(room_type,r_r);
 			
-			pl->timestamp=time(0);
+			//pl->timestamp=time(0);
 			if (pl->room.id!=0)
 				roomLeave(pl->room.type,pl->room.id);
 			
 			pl->room.type=room_type;
+			r_r->type=room_type;
 			pl->room.id=room_id;
+			r_r->id=room_id;
+			r_r->players.max=2;//change to event players max
 			roomEnter(pl->room.type,pl->room.id);
 			
 			pl->room.token=rand();
 			//set to prepare/ server worker then ask for room,
 			//when room will create, room server conn and set ROOM_RUN
-			room->status=ROOM_PREPARE;
+			r_r->status=ROOM_PREPARE;
 //			setMask(pl->bitmask,BM_PLAYER_TIMESTAMP);
 			return 0;
 		}
 		if (msg==MESSAGE_FAST_ROOM){
+			printf("ask to fast find room\n");
 			//find room
 			room_id=roomFind(room_type);
 			//check we find room
 			if (room_id==0){
 				//send no rooms found
+				printf("can't find room\n");
 				return 0;
 			}
-			pl->timestamp=time(0);
+			r_r=roomGet(room_type,room_id);
+			if (r_r==0){
+				//send no rooms found
+				return 0;
+			}
+			
+//			pl->timestamp=time(0);
 			if (pl->room.id!=0)
 				roomLeave(pl->room.type,pl->room.id);
 			
@@ -104,6 +122,7 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 			
 			roomEnter(pl->room.type,pl->room.id);
 			pl->room.token=rand();
+			r_r->timestamp=time(0);
 //			pl->status=PLAYER_IN_GAME;
 //			setMask(pl->bitmask,BM_PLAYER_STATUS);
 			//send conect to player
@@ -150,23 +169,38 @@ int recvPlayerData(worklist* w){
 	return 0;
 }
 
-int checkPlayerData(worklist* w){
+static int checkPlayerData(worklist* w,int _timestamp){
 	player_info * pl=w->data;
-	room * room;
-	int _timestamp=time(0);
+	room * r_r;
+	char mes;
 //	if (pl->status==PLAYER_IN_LOBBY){
 //		printf("player in lobby\n");
 		//check player data
 	if (pl->room.id!=0){
-		room=roomGet(pl->room.type,pl->room.id);
-		printf("get get room %d \n",(int)room);
-		if (room!=0){
-			if (pl->timestamp<room->timestamp)
-				if (room->status==ROOM_RUN){
-					pl->timestamp=room->timestamp;
+		r_r=roomGet(pl->room.type,pl->room.id);
+//		printf("check room %p \n",room);
+		if (r_r!=0){
+//			printf("check room ts %d %d\n",pl->timestamp,r_r->timestamp);
+			if (pl->timestamp<=r_r->timestamp)
+				if (r_r->status==ROOM_RUN){
+//					event * e_e;
+//					pl->timestamp=room->timestamp;
 //					pl->status=PLAYER_IN_GAME;
 //					setMask(pl->bitmask,BM_PLAYER_STATUS);
 					//send player to connect
+					mes=MESSAGE_GAME_START;
+					//send mes game start
+					sendData(w->sock,&mes,sizeof(mes));
+					char * s_s=serverGetById(r_r->server);
+					short l_l=strlen(s_s);
+					//send size of hostname
+					sendData(w->sock,&l_l,sizeof(l_l));
+					//send hostname
+					sendData(w->sock,s_s,l_l);
+					//send port
+					sendData(w->sock,&r_r->port,sizeof(r_r->port));
+					sendData(w->sock,&r_r->type,sizeof(r_r->type));
+					
 				}
 		}else{
 			//set player not chose room
@@ -216,6 +250,7 @@ void * threadWorker(void * arg){
 	printf("Worker %d started\n",id);
 	short err;
 	while(config.run){
+		int _timestamp=time(0);
 		tmp=task;
 		semop(worker_sem,&sem[0],1);
 			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
@@ -227,7 +262,7 @@ void * threadWorker(void * arg){
 					err++;
 				}
 				//check changes of player
-				checkPlayerData(tmp);
+				checkPlayerData(tmp,_timestamp);
 				//send data to player if need
 				if (sendPlayerData(tmp)!=0){
 //					printf("cant send\n");

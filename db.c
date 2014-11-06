@@ -97,8 +97,9 @@ int dbFillServers(){
 static int events_timestamp=0; 
 int dbFillEvents(){
 	//do some stuff
-	eventAdd(1);
-	
+	event * e_e;
+	e_e=eventAdd(1);
+	sprintf(e_e->map,"test");
 	events_timestamp=time(0);
 	return 0;
 }

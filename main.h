@@ -30,6 +30,7 @@
 
 //room statuses
 #define ROOM_PREPARE 1 //wait for proceed
+#define ROOM_WAIT 72 //wait for proceed
 #define ROOM_RUN 2	//allready played
 #define ROOM_FAIL 0	//cant create room
 #define ROOM_ERROR 3	//need to try create
@@ -42,6 +43,7 @@
 //out message types
 #define MESSAGE_PLAYER_CHANGE 1
 #define MESSAGE_EVENT_CHANGE 2
+#define MESSAGE_GAME_START 3
 //
 #define MESSAGE_CREATED 2
 #define MESSAGE_CHANGED 2
@@ -83,7 +85,7 @@ struct {
 	float timer;
 	
 	int id;
-	int type;
+	int type;	//==id event
 } room;
 
 typedef

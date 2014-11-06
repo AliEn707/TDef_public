@@ -67,6 +67,7 @@ void * threadListener(void * arg){
 				if((sock = accept(config.serverworker.sock, NULL, NULL))<0)
 					perror("accept listener");
 				config.serverworker.client_num++;
+				printf("conn server\n");
 				semop(config.serverworker.sem,&sem[0],1);
 					//add client to serverworker
 					tmp=worklistAdd(&config.serverworker.client,0);
