@@ -67,7 +67,7 @@ int _bintreeDel(bintree* root, int key){
 	if (get!=0){
 		root->next[next]=0;
 		if (root->next[(next+1)%2]==0){
-			printf("%d %d\n",next,(next+1)%2);
+//			printf("%d %d\n",next,(next+1)%2);
 			free(root);
 			return 1;
 		}
@@ -103,7 +103,7 @@ int bintreeDel(bintree* root, int key){
 void bintreeErase(bintree * root){
 	if (root==0)
 		return;
-	printf("y\n");
+//	printf("y\n");
 	bintreeErase(root->next[0]);
 	bintreeErase(root->next[1]);
 	free(root->next[0]);

@@ -56,7 +56,9 @@ struct {
 	}
 	
 	void printRooms() {
-		 roomCheckAll(fff);
+		printf("all rooms:\n");
+		roomCheckAll(fff);
+		printf("thats all.\n");
 	}
 	
 	room * roomGet (int key1, int key2) { //TODO: make this useful
@@ -83,11 +85,13 @@ struct {
 	}
 	//del room_info from map, not doing free
 	room * roomRem (int key1, int key2) {
+		printRooms();
 		for (it i = rooms_map[key1].begin(); i != rooms_map[key1].end(); i++)
 			if (i->first == key2) {
 				room * tmp = (room *) i->second;
 				rooms_map[key1].erase(i);
 				eventRoomDel(key1);
+				printf("room %d on %d removed\n",key2,key1);
 				return tmp; //removed
 			}
 //		perror("room not rem");
@@ -95,7 +99,6 @@ struct {
 	}
 	//find rand room by key
 	int roomFind(int key) {//ADD: param to search - free slots
-		printRooms();
 		if (rooms_map[key].size()== 0)
 			return 0;
 		vector<int> temp;

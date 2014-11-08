@@ -76,7 +76,8 @@ static int checkRoomStatus(room * r){
 			int _$_;
 			printf("try to get room\n");
 			//try to find free server
-			for($_$=serversGetNum();$_$>0;$_$--)
+			$_$=serversGetNum();
+			for($_$--;$_$>=0;$_$--)
 				if ((_$_=connSendRecv(serverGetById($_$),
 							serversGetPortById($_$),
 							&message,
@@ -144,12 +145,13 @@ static int proceedServerMessage(worklist* w,char msg_type){
 	if (msg_type==MESSAGE_ROOM_RESULT){ //packet [mes(char)token(int)playertoken(int) ..
 		recvData(w->sock,&token,sizeof(token));
 		room=roomGetByToken(token);
-		recvData(w->sock,&token,sizeof(token));
 		//add another
+		if (room==0)
+			return 1;
+		//add some data
 		
-		//del after
-		int $_$=0;
-		$_$=room->users+$_$;
+		//at the end get status
+		recvData(w->sock,&room->status,sizeof(room->status)); //short
 	}
 	return 0;
 }
