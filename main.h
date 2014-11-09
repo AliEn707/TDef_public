@@ -34,6 +34,7 @@
 #define ROOM_RUN 2	//allready played
 #define ROOM_FAIL 0	//cant create room
 #define ROOM_ERROR 3	//need to try create
+#define ROOM_CREATED -1
 
 //player bitmasks
 #define BM_PLAYER_CONNECTED 1
@@ -120,6 +121,7 @@ struct {
 		//int port;  use id->info->port
 		int type; //room that player attach
 		int id; //room that player attach
+		int timestamp;
 	} room;
 	//base
 	int id;  //player id  from base ??
@@ -170,6 +172,7 @@ struct {
 		int sock;//socket for servers
 		int port;//rooms connect port
 		int sem;
+		int room_sem;
 		worklist client;
 		pthread_t thread;
 	} serverworker;

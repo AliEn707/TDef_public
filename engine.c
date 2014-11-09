@@ -98,6 +98,9 @@ void cleanAll(){
 	if (config.serverworker.sem!=0)	
 		if (semctl(config.serverworker.sem,0,IPC_RMID)<0)
 			perror("semctl serverworker");
+	if (config.serverworker.room_sem!=0)	
+		if (semctl(config.serverworker.room_sem,0,IPC_RMID)<0)
+			perror("semctl room serverworker");
 	worklistErase(&config.serverworker.client);
 	
 	if (config.watcher.sem!=0)	

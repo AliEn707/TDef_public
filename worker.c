@@ -76,9 +76,11 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 			}
 			memset(r_r,0,sizeof(room));
 			r_r->token=rand();//token;
+			r_r->status=ROOM_CREATED;
 			printf("token %d\n",r_r->token);
+			semop(config.serverworker.room_sem,&sem[0],1);		
 			room_id=roomAdd(room_type,r_r);
-			
+			semop(config.serverworker.room_sem,&sem[1],1);
 			//pl->timestamp=time(0);
 			if (pl->room.id!=0)
 				roomLeave(pl->room.type,pl->room.id);
@@ -100,14 +102,18 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 		if (msg==MESSAGE_FAST_ROOM){
 			printf("ask to fast find room\n");
 			//find room
+			semop(config.serverworker.room_sem,&sem[0],1);
 			room_id=roomFind(room_type);
+			semop(config.serverworker.room_sem,&sem[1],1);
 			//check we find room
 			if (room_id==0){
 				//send no rooms found
 				printf("can't find room\n");
 				return 0;
 			}
+			semop(config.serverworker.room_sem,&sem[0],1);
 			r_r=roomGet(room_type,room_id);
+			semop(config.serverworker.room_sem,&sem[1],1);
 			if (r_r==0){
 				//send no rooms found
 				return 0;
@@ -177,7 +183,9 @@ static int checkPlayerData(worklist* w,int _timestamp){
 //		printf("player in lobby\n");
 		//check player data
 	if (pl->room.id!=0){
+		semop(config.serverworker.room_sem,&sem[0],1);
 		r_r=roomGet(pl->room.type,pl->room.id);
+		semop(config.serverworker.room_sem,&sem[1],1);
 //		printf("check room %p \n",room);
 		if (r_r!=0){
 //			printf("check room ts %d %d\n",pl->timestamp,r_r->timestamp);
@@ -187,20 +195,22 @@ static int checkPlayerData(worklist* w,int _timestamp){
 //					pl->timestamp=room->timestamp;
 //					pl->status=PLAYER_IN_GAME;
 //					setMask(pl->bitmask,BM_PLAYER_STATUS);
-					//send player to connect
-					mes=MESSAGE_GAME_START;
-					//send mes game start
-					sendData(w->sock,&mes,sizeof(mes));
-					char * s_s=serverGetById(r_r->server);
-					short l_l=strlen(s_s);
-					//send size of hostname
-					sendData(w->sock,&l_l,sizeof(l_l));
-					//send hostname
-					sendData(w->sock,s_s,l_l);
-					//send port
-					sendData(w->sock,&r_r->port,sizeof(r_r->port));
-					sendData(w->sock,&r_r->type,sizeof(r_r->type));
-					
+					if (pl->room.timestamp!=r_r->timestamp){
+						//send player to connect
+						mes=MESSAGE_GAME_START;
+						//send mes game start
+						sendData(w->sock,&mes,sizeof(mes));
+						char * s_s=serverGetById(r_r->server);
+						short l_l=strlen(s_s);
+						//send size of hostname
+						sendData(w->sock,&l_l,sizeof(l_l));
+						//send hostname
+						sendData(w->sock,s_s,l_l);
+						//send port
+						sendData(w->sock,&r_r->port,sizeof(r_r->port));
+						sendData(w->sock,&r_r->type,sizeof(r_r->type));
+						pl->room.timestamp=r_r->timestamp;
+					}
 				}
 		}else{
 			//set player not chose room

@@ -84,6 +84,21 @@ struct {
 		}
 	}
 	//del room_info from map, not doing free
+/*
+	room * roomRem (int key1, int key2) {
+		for (it i = rooms_map[key1].begin(); i != rooms_map[key1].end();) {
+			if (i->first == key2) {
+				room * tmp = (room *) i->second;
+				rooms_map[key1].erase(i++);
+				eventRoomDel(key1);
+				return tmp; //removed
+			}
+			else
+				++i;
+		}
+		return NULL; //no such element
+	}
+*/
 	room * roomRem (int key1, int key2) {
 		printRooms();
 		for (it i = rooms_map[key1].begin(); i != rooms_map[key1].end(); i++)
@@ -92,6 +107,7 @@ struct {
 				rooms_map[key1].erase(i);
 				eventRoomDel(key1);
 				printf("room %d on %d removed\n",key2,key1);
+				printRooms();
 				return tmp; //removed
 			}
 //		perror("room not rem");
@@ -169,9 +185,14 @@ struct {
 	}
 	
 	int roomCheckAll(int($f)(room * r)) {
-		for (it_big i = rooms_map.begin(); i != rooms_map.end(); i++)
+		vector <void*> v_v;
+		for (it_big i = rooms_map.begin(); i != rooms_map.end(); i++){
 			for (it j = i->second.begin(); j != i->second.end(); j++)
-				$f((room *)j->second);
+				v_v.push_back(j->second);
+		}
+		unsigned int i;
+		for (i=0;i<v_v.size();i++)
+			$f((room *)v_v[i]);
 		return 0;
 	}
 	

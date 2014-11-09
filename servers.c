@@ -1,5 +1,6 @@
 #include "headers.h"
 
+#define MAX_SERVERS 40
 
 typedef char hostname[25];
 
@@ -8,7 +9,7 @@ struct {
 	hostname hostname;
 	int port;
 	short status;
-} servers[40];
+} servers[MAX_SERVERS];
 
 static int _servers;
 
@@ -33,6 +34,16 @@ int serversLoad(){
 
 int serversGetNum(){
 	return _servers;
+}
+
+int * serversGetSort(){
+	static int s_s[MAX_SERVERS+1];
+	int i,j=0;
+	for (i=0;i<serversGetNum();i++)
+		if (servers[i].status>0)
+			s_s[j++]=i;
+	*s_s=j;
+	return s_s;
 }
 
 void serversSetFail(int id){
