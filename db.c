@@ -25,7 +25,7 @@ player_info * dbAuth(worklist * client){
 		return 0;
 	}
 	client->id=rand();
-	printf("client id = %d",client->id);
+	printf("client id = %d\n",client->id);
 	if ((pl=malloc(sizeof(player_info)))==0){
 		perror("malloc player_info");
 		close(client->sock);

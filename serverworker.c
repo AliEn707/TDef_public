@@ -12,12 +12,12 @@
 
 
 
-static int connSendRecv(char * hostname,int port, void * mes, int $mes){
+static int connSendRecv(char * hostname,int port, int token){
 	int sockfd,n;
 	struct sockaddr_in servaddr;
 	struct hostent *server;
 	char mes_;
-	struct {char type;int token;} *message=mes;
+	char type='c'; //'c' for get new room
 	if (hostname==0)
 		return -1;
 	printf("try %s:%d\n",hostname,port);
@@ -43,9 +43,9 @@ static int connSendRecv(char * hostname,int port, void * mes, int $mes){
 		return -2;
 	}	
 	
-	sendData(sockfd,&message->type,sizeof(message->type));
+	sendData(sockfd,&type,sizeof(type));
 //	printf("send token %d \n",message->token);
-	sendData(sockfd,&message->token,sizeof(message->token));
+	sendData(sockfd,&token,sizeof(token));
 		
 	n=recv(sockfd,&mes_,sizeof(mes_),0);
 	printf("get answer %d\n",n);
@@ -62,15 +62,15 @@ static int connSendRecv(char * hostname,int port, void * mes, int $mes){
 
 static int checkRoomStatus(room * r){
 	float Dt=0.1;
-	struct {char type;int token;} message;
-	memset(&message,0,sizeof(message));
+//	struct {char type;int token;} message;
+//	memset(&message,0,sizeof(message));
 //	printf("room tok= %d status= %d\n",r->token,r->status);
 	if (r->status==ROOM_PREPARE){
 		if (r->timer>0)
 			r->timer-=Dt;
 		else{
-			message.type='n'; //'n' for get new room
-			message.token=r->token;
+//			message.type='c'; //'c' for get new room
+//			message.token=r->token;
 			//ask for room $_$
 			int i;
 			int * $_$;
@@ -82,8 +82,7 @@ static int checkRoomStatus(room * r){
 			for(i=1;i<=*$_$;i++)
 				if ((_$_=connSendRecv(serverGetById($_$[i]),
 							serversGetPortById($_$[i]),
-							&message,
-							sizeof(message)))<=0){//we do not get answer, all ok
+							r->token))<=0){//we do not get answer, all ok
 					//printf("_$_= %d\n",_$_);
 					if (_$_<0){//cant connect
 						serversSetFail($_$[i]);
