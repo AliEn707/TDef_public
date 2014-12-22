@@ -9,7 +9,7 @@
 ╚══════════════════════════════════════════════════════════════╝
 */
 
-#define SIZE_OF_PASSWD 16
+#define SIZE_OF_PASSWD 32
 
 //check player auth and create player_info struct or ret 0
 player_info * dbAuth(worklist * client){
