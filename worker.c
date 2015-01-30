@@ -78,9 +78,9 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 			r_r->token=rand();//token;
 			r_r->status=ROOM_CREATED;
 			printf("token %d\n",r_r->token);
-			semop(config.serverworker.room_sem,&sem[0],1);		
+			t_semop(t_sem.room,&sem[0],1);		
 			room_id=roomAdd(room_type,r_r);
-			semop(config.serverworker.room_sem,&sem[1],1);
+			t_semop(t_sem.room,&sem[1],1);
 			//pl->timestamp=time(0);
 			if (pl->room.id!=0)
 				roomLeave(pl->room.type,pl->room.id);
@@ -102,18 +102,18 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 		if (msg==MESSAGE_FAST_ROOM){
 			printf("ask to fast find room\n");
 			//find room
-			semop(config.serverworker.room_sem,&sem[0],1);
+			t_semop(t_sem.room,&sem[0],1);
 			room_id=roomFind(room_type);
-			semop(config.serverworker.room_sem,&sem[1],1);
+			t_semop(t_sem.room,&sem[1],1);
 			//check we find room
 			if (room_id==0){
 				//send no rooms found
 				printf("can't find room\n");
 				return 0;
 			}
-			semop(config.serverworker.room_sem,&sem[0],1);
+			t_semop(t_sem.room,&sem[0],1);
 			r_r=roomGet(room_type,room_id);
-			semop(config.serverworker.room_sem,&sem[1],1);
+			t_semop(t_sem.room,&sem[1],1);
 			if (r_r==0){
 				//send no rooms found
 				return 0;
@@ -183,9 +183,9 @@ static int checkPlayerData(worklist* w,int _timestamp){
 //		printf("player in lobby\n");
 		//check player data
 	if (pl->room.id!=0){
-		semop(config.serverworker.room_sem,&sem[0],1);
+		t_semop(t_sem.room,&sem[0],1);
 		r_r=roomGet(pl->room.type,pl->room.id);
-		semop(config.serverworker.room_sem,&sem[1],1);
+		t_semop(t_sem.room,&sem[1],1);
 //		printf("check room %p \n",room);
 		if (r_r!=0){
 //			printf("check room ts %d %d\n",pl->timestamp,r_r->timestamp);
@@ -252,7 +252,7 @@ void * threadWorker(void * arg){
 	int id=*(int*)arg;
 	worklist * tmp;
 	worklist * task=&config.worker[id].client;
-	int worker_sem=config.worker[id].sem;
+	t_sem_t worker_sem=t_sem.worker[id];
 	int TPS=10;  //ticks per sec
 	struct timeval tv={0,0};
 	timePassed(&tv);
@@ -262,7 +262,7 @@ void * threadWorker(void * arg){
 	while(config.run){
 		int _timestamp=time(0);
 		tmp=task;
-		semop(worker_sem,&sem[0],1);
+		t_semop(worker_sem,&sem[0],1);
 			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
 				//some work
 				err=0;
@@ -285,7 +285,7 @@ void * threadWorker(void * arg){
 					tmp=worklistDel(task,tmp->id);
 				}
 			}
-		semop(worker_sem,&sem[1],1);
+		t_semop(worker_sem,&sem[1],1);
 		//some work
 		syncTPS(timePassed(&tv),TPS);
 	}
@@ -301,9 +301,9 @@ pthread_t  startWorker(int id){
 		perror("malloc startWorker");
 	*arg=id;
 	
-	if((config.worker[id].sem=semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
+	if((t_sem.worker[id]=t_semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
 		return 0;
-	semop(config.worker[id].sem,&sem[1],1);
+	t_semop(t_sem.worker[id],&sem[1],1);
 	
 	if(pthread_create(&th,0,threadWorker,arg)!=0)
 		return 0;

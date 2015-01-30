@@ -40,22 +40,22 @@ int clientCheck(worklist * client){
 			client->data=pl;
 			config.worker[worker].client_num++;
 			//add player to config.player.tree
-			semop(config.player.sem,&sem[0],1);
+			t_semop(t_sem.player,&sem[0],1);
 				if (bintreeAdd(&config.player.tree,client->id,pl)==0){
 					perror("bintreeAdd player_info");
 					close(client->sock);
 					client->id=delPlayerId(client->id);
 				}else{
-					semop(config.worker[worker].sem,&sem[0],1);
+					t_semop(t_sem.worker[worker],&sem[0],1);
 						//add player to worklist of worker thread
 						tmp=worklistAdd(&config.worker[worker].client,0);
 						tmp->id=client->id;
 						tmp->sock=client->sock;
 						tmp->data=client->data;
 						//keep player data in list to check in future
-					semop(config.worker[worker].sem,&sem[1],1);
+					t_semop(t_sem.worker[worker],&sem[1],1);
 				}
-			semop(config.player.sem,&sem[1],1);
+			t_semop(t_sem.player,&sem[1],1);
 		} else {
 			printf("bad auth\n");
 			return 1;
@@ -86,7 +86,7 @@ void * threadWatcher(void * arg){
 	
 	while(config.run){
 		tmp=&config.watcher.client;
-		semop(config.watcher.sem,&sem[0],1);
+		t_semop(t_sem.watcher,&sem[0],1);
 			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
 				if (clientCheck(tmp)!=0){
 					delPlayerId(tmp->id);
@@ -97,7 +97,7 @@ void * threadWatcher(void * arg){
 				}
 				//some work
 			}
-		semop(config.watcher.sem,&sem[1],1);
+		t_semop(t_sem.watcher,&sem[1],1);
 		//some work
 		syncTPS(timePassed(&tv),TPS);
 	}
@@ -114,9 +114,9 @@ pthread_t  startWatcher(int id){
 		perror("malloc startWatcher");
 	*arg=id;
 	
-	if((config.watcher.sem=semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
+	if((t_sem.watcher=t_semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
 		return 0;
-	semop(config.watcher.sem,&sem[1],1);
+	t_semop(t_sem.watcher,&sem[1],1);
 	
 	if(pthread_create(&th,0,threadWatcher,arg)!=0)
 		return 0;

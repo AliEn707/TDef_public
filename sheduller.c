@@ -23,13 +23,13 @@ void * threadSheduller(void * arg){
 	while(config.run){
 		//check tasks
 		tmp=&config.sheduller.task;
-		semop(config.sheduller.sem,&sem[0],1);
+		t_semop(t_sem.sheduller,&sem[0],1);
 			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
 				//some work
 				//send message
 				sendMsg(msg);
 			}
-		semop(config.sheduller.sem,&sem[1],1);
+		t_semop(t_sem.sheduller,&sem[1],1);
 		
 //		while(getMsg(msg)>0){
 //			printf("get message %s\n",msg.buf);
@@ -50,9 +50,9 @@ pthread_t startSheduller(int id){
 		perror("malloc startSheduller");
 	*arg=id;
 	
-	if((config.sheduller.sem=semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
+	if((t_sem.sheduller=t_semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
 		return 0;
-	semop(config.sheduller.sem,&sem[1],1);
+	t_semop(t_sem.sheduller,&sem[1],1);
 	
 	if ((config.sheduller.msg=msgget(IPC_PRIVATE,IPC_CREAT|0700))==0)
 		return 0;

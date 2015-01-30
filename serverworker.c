@@ -107,9 +107,9 @@ static int checkRoomStatus(room * r){
 		room* _r;
 		//remove room
 		printf("r->  %d  %d %d\n",r->id,r->type,r->token);
-		semop(config.serverworker.room_sem,&sem[0],1);
+		t_semop(t_sem.room,&sem[0],1);
 		_r=roomRem(r->type,r->id);
-		semop(config.serverworker.room_sem,&sem[1],1);
+		t_semop(t_sem.room,&sem[1],1);
 		if (_r!=0){
 			printf("room removed\n");
 			free(_r);
@@ -127,9 +127,9 @@ static int proceedServerMessage(worklist* w,char msg_type){
 	event * e_e;
 	if (msg_type==MESSAGE_ROOM_STATUS){ //packet [mes(char)token(int)status(short)]
 		recvData(w->sock,&token,sizeof(token));
-		semop(config.serverworker.room_sem,&sem[0],1);
+		t_semop(t_sem.room,&sem[0],1);
 		r_r=roomGetByToken(token);
-		semop(config.serverworker.room_sem,&sem[1],1);
+		t_semop(t_sem.room,&sem[1],1);
 //		printf("room\n");
 		if (r_r==0)
 			return 1;
@@ -150,9 +150,9 @@ static int proceedServerMessage(worklist* w,char msg_type){
 	if (msg_type==MESSAGE_ROOM_RESULT){ //packet [mes(char)token(int)playertoken(int) ..
 		printf("get room result\n");
 		recvData(w->sock,&token,sizeof(token));
-		semop(config.serverworker.room_sem,&sem[0],1);
+		t_semop(t_sem.room,&sem[0],1);
 		r_r=roomGetByToken(token);
-		semop(config.serverworker.room_sem,&sem[1],1);
+		t_semop(t_sem.room,&sem[1],1);
 		//add another
 		if (r_r==0){
 			printf("cant find room\n");
@@ -208,7 +208,7 @@ void * threadServerWorker(void * arg){
 	
 	while(config.run){
 		tmp=&config.serverworker.client;
-		semop(config.serverworker.sem,&sem[0],1);
+		t_semop(t_sem.serverworker,&sem[0],1);
 			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
 				//get data from server about players and statistics
 				if (recvServerData(tmp)!=0){
@@ -220,11 +220,11 @@ void * threadServerWorker(void * arg){
 				}
 				
 			}
-		semop(config.serverworker.sem,&sem[1],1);
+		t_semop(t_sem.serverworker,&sem[1],1);
 			
-		semop(config.serverworker.room_sem,&sem[1],1);
+		t_semop(t_sem.room,&sem[1],1);
 		roomCheckAll(checkRoomStatus);
-		semop(config.serverworker.room_sem,&sem[0],1);
+		t_semop(t_sem.room,&sem[0],1);
 		
 		//some work
 		syncTPS(timePassed(&tv),TPS);
@@ -241,13 +241,13 @@ pthread_t  startServerWorker(int id){
 		perror("malloc startServerWorker");
 	*arg=id;
 	
-	if((config.serverworker.sem=semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
+	if((t_sem.serverworker=t_semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
 		return 0;
-	semop(config.serverworker.sem,&sem[1],1);
+	t_semop(t_sem.serverworker,&sem[1],1);
 	
-	if((config.serverworker.room_sem=semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
+	if((t_sem.room=t_semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
 		return 0;
-	semop(config.serverworker.room_sem,&sem[1],1);
+	t_semop(t_sem.room,&sem[1],1);
 	
 	if(pthread_create(&th,0,threadServerWorker,arg)!=0)
 		return 0;

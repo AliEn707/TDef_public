@@ -6,10 +6,10 @@
 #include <strings.h>
 #include <unistd.h> 
 #include <sys/time.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
-#include <sys/shm.h>
+//#include <sys/types.h>
+//#include <sys/ipc.h>
+//#include <sys/sem.h>
+//#include <sys/shm.h>
 #include <sys/msg.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -136,14 +136,14 @@ struct {
 		int sock;
 		int port;//players connect port
 		bintree tree;
-		int sem;
+//		int sem;
 		char ids[PLAYER_MAX];
 	} player;
 	
 	struct{
 		int id;
 		int client_num;
-		int sem;
+//		int sem;
 		worklist client;
 		pthread_t thread;
 	} worker[WORKER_NUM];
@@ -154,14 +154,14 @@ struct {
 	
 	struct{
 		int msg;
-		int sem;
+//		int sem;
 		worklist task;
 		pthread_t thread;
 	} sheduller;
 	
 	struct{
 		int client_num;
-		int sem;
+//		int sem;
 		worklist client;
 		pthread_t thread;
 	} watcher;
@@ -171,8 +171,8 @@ struct {
 		int client_num;
 		int sock;//socket for servers
 		int port;//rooms connect port
-		int sem;
-		int room_sem;
+//		int sem;
+//		int room_sem;
 		worklist client;
 		pthread_t thread;
 	} serverworker;
@@ -192,6 +192,6 @@ struct {
 
 /////////////
 config_t config;
-struct sembuf sem[2];
+
 
 

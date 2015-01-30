@@ -68,11 +68,11 @@ void * threadListener(void * arg){
 					perror("accept listener");
 				config.serverworker.client_num++;
 				printf("conn server\n");
-				semop(config.serverworker.sem,&sem[0],1);
+				t_semop(t_sem.serverworker,&sem[0],1);
 					//add client to serverworker
 					tmp=worklistAdd(&config.serverworker.client,0);
 					tmp->sock=sock;
-				semop(config.serverworker.sem,&sem[1],1);
+				t_semop(t_sem.serverworker,&sem[1],1);
 				sleep(0);
 			}
 			
@@ -84,8 +84,8 @@ void * threadListener(void * arg){
 					perror("accept listener");
 				printf("player connected\n");
 				config.watcher.client_num++;
-//				printf("semval= %d\n",semctl(config.watcher.sem,1,GETVAL));
-				semop(config.watcher.sem,&sem[0],1);
+//				printf("semval= %d\n",t_semctl(config.watcher.sem,1,GETVAL));
+				t_semop(t_sem.watcher,&sem[0],1);
 					//add client to watcher
 					if ((tmp=worklistAdd(&config.watcher.client,0))==0){
 						perror("worklistAdd Listener");
@@ -94,7 +94,7 @@ void * threadListener(void * arg){
 						tmp->sock=sock;
 //						printf("added to watcher\n");
 					}
-				semop(config.watcher.sem,&sem[1],1);
+				t_semop(t_sem.watcher,&sem[1],1);
 				sleep(0);
 			}
 		}
@@ -107,13 +107,13 @@ void * threadListener(void * arg){
 
 pthread_t startListener(){
 	pthread_t th=0;
-	if((config.player.sem=semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
+	if((t_sem.player=t_semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
 		return 0;
-	semop(config.player.sem,&sem[1],1);
+	t_semop(t_sem.player,&sem[1],1);
 	
-//	if((config.serverworker.sem=semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
+//	if((config.serverworker.sem=t_semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
 //		return 0;
-//	semop(config.serverworker.sem,&sem[1],1);
+//	t_semop(config.serverworker.sem,&sem[1],1);
 	
 	if(pthread_create(&th,0,threadListener,0)!=0)
 		return 0;

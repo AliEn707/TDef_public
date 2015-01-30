@@ -100,38 +100,38 @@ int delPlayerId(int id){
 void cleanAll(){
 	int i;
 	for(i=0;i<WORKER_NUM;i++){
-		if (config.worker[i].sem!=0)	
-			if (semctl(config.worker[i].sem,0,IPC_RMID)<0)
-				perror("semctl worker");
+		if (t_sem.worker[i]!=0)	
+			if (t_semctl(t_sem.worker[i],0,IPC_RMID)<0)
+				perror("t_semctl worker");
 		worklistErase(&config.worker[i].client);
 	}
 	
-	if (config.serverworker.sem!=0)	
-		if (semctl(config.serverworker.sem,0,IPC_RMID)<0)
-			perror("semctl serverworker");
-	if (config.serverworker.room_sem!=0)	
-		if (semctl(config.serverworker.room_sem,0,IPC_RMID)<0)
-			perror("semctl room serverworker");
+	if (t_sem.serverworker!=0)	
+		if (t_semctl(t_sem.serverworker,0,IPC_RMID)<0)
+			perror("t_semctl serverworker");
+	if (t_sem.room!=0)	
+		if (t_semctl(t_sem.room,0,IPC_RMID)<0)
+			perror("t_semctl room serverworker");
 	worklistErase(&config.serverworker.client);
 	
-	if (config.watcher.sem!=0)	
-		if (semctl(config.watcher.sem,0,IPC_RMID)<0)
-			perror("semctl watcher");
+	if (t_sem.watcher!=0)	
+		if (t_semctl(t_sem.watcher,0,IPC_RMID)<0)
+			perror("t_semctl watcher");
 	worklistErase(&config.watcher.client);
 		
-	if (config.sheduller.sem!=0)	
-		if (semctl(config.sheduller.sem,0,IPC_RMID)<0)
-			perror("semctl sheduller");
+	if (t_sem.sheduller!=0)	
+		if (t_semctl(t_sem.sheduller,0,IPC_RMID)<0)
+			perror("t_semctl sheduller");
 	worklistErase(&config.sheduller.task);
 	
 	//clear msg
-	if (config.sheduller.msg!=0)	
+	if (t_sem.sheduller!=0)	
 		if (msgctl(config.sheduller.msg,IPC_RMID,0))
 			perror("mesctl sheduller");
 	
-	if (config.player.sem!=0)	
-		if (semctl(config.player.sem,0,IPC_RMID)<0)
-			perror("semctl player");
+	if (t_sem.player!=0)	
+		if (t_semctl(t_sem.player,0,IPC_RMID)<0)
+			perror("t_semctl player");
 	bintreeErase(&config.player.tree);
 }
 
