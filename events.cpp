@@ -1,11 +1,11 @@
-//#include "headers.h"
+﻿//#include "headers.h"
 
 
 #include <map>
 #include <vector>
 #include <iostream>
 #include <cstdio>
-#include <cstdlib>
+#include <cstdlib> 
 /*
 ╔══════════════════════════════════════════════════════════════╗
 ║ 		functions for binary tree with data 			                       ║

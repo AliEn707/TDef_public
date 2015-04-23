@@ -9,6 +9,8 @@
 ╚══════════════════════════════════════════════════════════════╝
 */
 
+#define PRIVATE_POLICY "<cross-domain-policy><allow-access-from domain=\"*\" to-ports=\"*\" /></cross-domain-policy>"
+
 
 int startServer(port){
 	int listener;
@@ -66,9 +68,10 @@ void * threadListener(void * arg){
 				worklist * tmp;
 				if((sock = accept(config.serverworker.sock, NULL, NULL))<0)
 					perror("accept listener");
-				config.serverworker.client_num++;
+				
 				printf("conn server\n");
 				t_semop(t_sem.serverworker,&sem[0],1);
+					config.serverworker.client_num++;
 					//add client to serverworker
 					tmp=worklistAdd(&config.serverworker.client,0);
 					tmp->sock=sock;
@@ -79,23 +82,32 @@ void * threadListener(void * arg){
 			if (FD_ISSET(config.player.sock, &read_fds)){
 //				int w_id;
 				int sock;
+				char t_t[14];
 				worklist * tmp;
 				if((sock = accept(config.player.sock, NULL, NULL))<0)
 					perror("accept listener");
-				printf("player connected\n");
-				config.watcher.client_num++;
-//				printf("semval= %d\n",t_semctl(config.watcher.sem,1,GETVAL));
-				t_semop(t_sem.watcher,&sem[0],1);
-					//add client to watcher
-					if ((tmp=worklistAdd(&config.watcher.client,0))==0){
-						perror("worklistAdd Listener");
-						close(sock);
-					} else {
-						tmp->sock=sock;
-//						printf("added to watcher\n");
-					}
-				t_semop(t_sem.watcher,&sem[1],1);
-				sleep(0);
+				
+				memset(t_t,0,sizeof(t_t));
+				recvData(sock,t_t,13);//get 13 bytes
+				if (strstr(t_t,"<policy")!=0){
+					_sendData(sock,PRIVATE_POLICY,sizeof(PRIVATE_POLICY));
+					close(sock);
+				}else{
+					printf("player connected: %s\n",t_t);
+	//				printf("semval= %d\n",t_semctl(config.watcher.sem,1,GETVAL));
+					t_semop(t_sem.watcher,&sem[0],1);
+						config.watcher.client_num++;
+						//add client to watcher
+						if ((tmp=worklistAdd(&config.watcher.client,0))==0){
+							perror("worklistAdd Listener");
+							close(sock);
+						} else {
+							tmp->sock=sock;
+	//						printf("added to watcher\n");
+						}
+					t_semop(t_sem.watcher,&sem[1],1);
+					sleep(0);
+				}
 			}
 		}
 		syncTPS(timePassed(&tv),TPS);

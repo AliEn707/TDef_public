@@ -38,7 +38,7 @@ int clientCheck(worklist * client){
 			//set player data, get from base
 			setMask(pl->bitmask,BM_PLAYER_CONNECTED);
 			client->data=pl;
-			config.worker[worker].client_num++;
+			
 			//add player to config.player.tree
 			t_semop(t_sem.player,&sem[0],1);
 				if (bintreeAdd(&config.player.tree,client->id,pl)==0){
@@ -47,9 +47,9 @@ int clientCheck(worklist * client){
 					client->id=delPlayerId(client->id);
 				}else{
 					t_semop(t_sem.worker[worker],&sem[0],1);
+						config.worker[worker].client_num++;
 						//add player to worklist of worker thread
-						tmp=worklistAdd(&config.worker[worker].client,0);
-						tmp->id=client->id;
+						tmp=worklistAdd(&config.worker[worker].client, client->id);
 						tmp->sock=client->sock;
 						tmp->data=client->data;
 						//keep player data in list to check in future

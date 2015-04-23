@@ -1,5 +1,6 @@
 
 int recvData(int sock, void * buf, int size);
+int _sendData(int sock, void * buf, int size);
 
 int timePassed(struct timeval * t);
 

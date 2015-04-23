@@ -48,9 +48,9 @@ int recvData(int sock, void * buf, int size){
 		if((get=recv(sock,buf+(size-need),need,MSG_DONTWAIT))<=0)
 			if (errno!=EAGAIN)
 				return -1;
-		usleep(300000);
+		usleep(100000);
 		$$++;
-		if ($$>15)//max tries of read
+		if ($$>20)//max tries of read
 			return -1;
 	}while(need>0);
 	return size;

@@ -24,7 +24,8 @@ player_info * dbAuth(worklist * client){
 		close(client->sock);
 		return 0;
 	}
-	client->id=rand();
+	//?
+//	client->id=rand();
 	printf("client id = %d\n",client->id);
 	if ((pl=malloc(sizeof(player_info)))==0){
 		perror("malloc player_info");
@@ -45,14 +46,14 @@ player_info * dbAuth(worklist * client){
 		return 0;
 //	printf("prepare to get data\n");
 	//get name size
-	if (recvData(client->sock,&$name,sizeof($name))<0)
+	if (recvData(client->sock,&$name,sizeof($name))<=0)
 		return 0;
 	printf("get size of name %d\n",$name);
 	if ($name!=0){
-		if (recvData(client->sock,name,$name)<0) //change to anblock try to get
+		if (recvData(client->sock,name,$name)<=0) //change to anblock try to get
 			return 0;
 		printf("get name %s\n",name);
-		if (recvData(client->sock,passwd,SIZE_OF_PASSWD)<0)
+		if (recvData(client->sock,passwd,SIZE_OF_PASSWD)<=0)
 			return 0;
 		printf("get passwd %s\n",passwd);
 	}else {
@@ -61,20 +62,16 @@ player_info * dbAuth(worklist * client){
 		*name=0;
 	}
 	//check auth
-	if ($name==0){
-		close(client->sock);
-		client->id=delPlayerId(client->id);
-		return 0;
-	}
-	//send first char of name
-	if (send(client->sock,&$name,sizeof($name),MSG_NOSIGNAL)<=0)
-		return 0;
-	//get data from db
+	//& get data from db
 	if (gbGetPlayer(pl, name)!=0){
 		close(client->sock);
 		client->id=delPlayerId(client->id);
 		return 0;
-	}	
+	}
+	client->id=pl->id;
+	//send client id
+	if (send(client->sock,&client->id,sizeof(client->id),MSG_NOSIGNAL)<=0)
+		return 0;
 	return pl;
 }
 

@@ -9,6 +9,7 @@ s = TCPSocket.open(hostname, port)
 
 #puts connected
 s.write [4].pack("l")
+s.puts "1234567890123"
 s.puts "test"
 s.puts "12345678901234"
 s.puts "Lc"
