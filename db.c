@@ -63,7 +63,7 @@ player_info * dbAuth(worklist * client){
 	}
 	//check auth
 	//& get data from db
-	if (gbGetPlayer(pl, name)!=0){
+	if (dbGetPlayer(pl, name)!=0){
 		close(client->sock);
 		client->id=delPlayerId(client->id);
 		return 0;
@@ -75,11 +75,11 @@ player_info * dbAuth(worklist * client){
 	return pl;
 }
 
-int gbGetPlayer(player_info * pl, char * name){
+int dbGetPlayer(player_info * pl, char * name){
 	if (name==0)
 		return -1;
 	//get and set player data
-	
+	pl->id=rand();
 	return 0;
 }
 
@@ -96,7 +96,7 @@ int dbFillEvents(){
 	//do some stuff
 	event * e_e;
 	e_e=eventAdd(1);
-	sprintf(e_e->map,"test");
+	sprintf(e_e->map,"4");
 	events_timestamp=time(0);
 	return 0;
 }

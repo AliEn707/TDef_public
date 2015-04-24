@@ -77,7 +77,7 @@ int clientCheck(worklist * client){
 void * threadWatcher(void * arg){
 	int id=*(int*)arg;
 	worklist * tmp;
-	int TPS=10;  //ticks per sec
+	int TPS=3;  //ticks per sec
 	struct timeval tv={0,0};
 	timePassed(&tv);
 	free(arg);

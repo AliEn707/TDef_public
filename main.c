@@ -17,7 +17,7 @@ He helps us in this not simple work.
 
 int main(){
 	int i;
-	message msg;
+	char buf[10];
 	struct sembuf _sem[2]={{0,-1,0},
 						  {0,1,0}};
 	//clean config
@@ -49,7 +49,7 @@ int main(){
 //		usleep((rand()%9)*100000);
 //	}
 	printf("done\n"); 
-	scanf("%s",msg.buf);
+	scanf("%s",buf);
 	printf("exiting\n");
 	config.run=0;
 	sleep(5);

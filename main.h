@@ -40,6 +40,8 @@
 #define BM_PLAYER_CONNECTED 1
 #define BM_PLAYER_STATUS 2
 #define BM_PLAYER_TIMESTAMP 4
+//event bitmasks
+#define BM_EVENT_MAP_NAME 1
 
 //out message types
 #define MESSAGE_PLAYER_CHANGE 1
@@ -88,12 +90,6 @@ struct {
 	int id;
 	int type;	//==id event
 } room;
-
-typedef
-struct {
-	long id;
-	char buf[100];
-} message;
 
 typedef 
 struct bintree{
@@ -181,8 +177,6 @@ struct {
 
 
 
-#define getMsg(msg) msgrcv(config.sheduller.msg,&msg,sizeof(msg),0,MSG_NOERROR|IPC_NOWAIT)
-#define sendMsg(msg) msg.id=1;msgsnd(config.sheduller.msg,&msg,sizeof(msg),0);
 
 #define sendData(sock,x,y) if(send(sock,x,y,MSG_NOSIGNAL)<=0) return -1
 

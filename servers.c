@@ -22,7 +22,7 @@ int serversLoad(){
 	memset(servers,0,sizeof(servers));
 	_servers=0;
 	while(!feof(file)){
-		fscanf(file,"%s %d\n",_servers[servers].hostname,&servers[_servers].port);
+		fscanf(file,"%s %d",_servers[servers].hostname,&servers[_servers].port);
 		servers[_servers].status=1;
 		_servers++;
 	}

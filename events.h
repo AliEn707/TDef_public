@@ -6,6 +6,7 @@ struct {
 	int $rooms;
 	char name[20];
 	char map[20];
+	int bitmask;
 } event;
 
 

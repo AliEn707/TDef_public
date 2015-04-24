@@ -17,15 +17,21 @@ static int checkEvent(void * n_n,event* e){
 	short l_l;
 	char mes;
 	if (pl->timestamp<e->timestamp){
+		int bitmask=0;
+		if (checkMask(pl->bitmask,BM_PLAYER_CONNECTED))
+			bitmask|=BM_EVENT_MAP_NAME;
+//		printf("send event %d\n",e->id);
 		//do some stuff
 		mes=MESSAGE_EVENT_CHANGE;
 		sendData(w->sock,&mes,sizeof(mes));
+		sendData(w->sock,&bitmask,sizeof(bitmask));
 		sendData(w->sock,&e->id,sizeof(e->id));
 		sendWorker(&e->$rooms,sizeof(e->$rooms));
-		l_l=strlen(e->map);
-		sendWorker(&l_l,sizeof(l_l));
-		sendWorker(e->map,l_l);
-		
+		if (checkMask(bitmask,BM_EVENT_MAP_NAME)){//only on player connect
+			l_l=strlen(e->map);
+			sendWorker(&l_l,sizeof(l_l));
+			sendWorker(e->map,l_l);
+		}
 		//add another data
 	}//TODO: how to send data about remove
 	return 0;
@@ -143,7 +149,7 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 			return 0;
 		}
 	}	
-	
+	printf("unknown message\n");
 	return 1;
 }
 
@@ -157,7 +163,7 @@ int recvPlayerData(worklist* w){
 		if (recv(w->sock,&msg_type,sizeof(msg_type),MSG_DONTWAIT)<0){
 			//have error check what is it
 			if (errno==EAGAIN){
-//				sleep(0);
+				usleep(100);
 //				continue;
 				break;
 			}else{
@@ -200,6 +206,7 @@ static int checkPlayerData(worklist* w,int _timestamp){
 						mes=MESSAGE_GAME_START;
 						//send mes game start
 						sendData(w->sock,&mes,sizeof(mes));
+						sendData(w->sock,&r_r->type,sizeof(r_r->type));
 						char * s_s=serverGetById(r_r->server);
 						short l_l=strlen(s_s);
 						//send size of hostname
@@ -208,7 +215,6 @@ static int checkPlayerData(worklist* w,int _timestamp){
 						sendData(w->sock,s_s,l_l);
 						//send port
 						sendData(w->sock,&r_r->port,sizeof(r_r->port));
-						sendData(w->sock,&r_r->type,sizeof(r_r->type));
 						pl->room.timestamp=r_r->timestamp;
 					}
 				}

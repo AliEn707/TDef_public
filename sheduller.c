@@ -13,7 +13,6 @@
 
 void * threadSheduller(void * arg){
 	int id=*(int*)arg;
-	message msg;
 	worklist * tmp;
 	int TPS=1;  //ticks per sec
 	struct timeval tv={0,0};
@@ -27,7 +26,7 @@ void * threadSheduller(void * arg){
 			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
 				//some work
 				//send message
-				sendMsg(msg);
+				
 			}
 		t_semop(t_sem.sheduller,&sem[1],1);
 		
@@ -53,9 +52,6 @@ pthread_t startSheduller(int id){
 	if((t_sem.sheduller=t_semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
 		return 0;
 	t_semop(t_sem.sheduller,&sem[1],1);
-	
-	if ((config.sheduller.msg=msgget(IPC_PRIVATE,IPC_CREAT|0700))==0)
-		return 0;
 	
 	if(pthread_create(&th,0,threadSheduller,arg)!=0)
 		return 0;
