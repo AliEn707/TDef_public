@@ -1,4 +1,4 @@
-#include <map>
+﻿#include <map>
 #include <vector>
 #include <iostream>
 #include <cstdio>
@@ -168,10 +168,9 @@ struct {
 		if (room==0)
 			return 0;
 		room->users--;
-		room->players.current--;
+//		room->players.current--;
 		if (room->users==0)
-			roomRem(type,id);
-		free(room);
+			free(roomRem(type,id));
 		return 0;
 	}
 	
@@ -179,7 +178,7 @@ struct {
 		room* room=roomGet(type,id);
 		if (room!=0) {
 			room->users++;
-			room->players.current++;
+//			room->players.current++;
 		}
 		return room;
 	}

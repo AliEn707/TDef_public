@@ -1,4 +1,4 @@
-#include "headers.h"
+﻿#include "headers.h"
 
 
 /*
@@ -109,11 +109,11 @@ static int checkRoomStatus(room * r){
 		printf("r->  %d  %d %d\n",r->id,r->type,r->token);
 		t_semop(t_sem.room,&sem[0],1);
 		_r=roomRem(r->type,r->id);
-		t_semop(t_sem.room,&sem[1],1);
 		if (_r!=0){
 			printf("room removed\n");
 			free(_r);
 		}
+		t_semop(t_sem.room,&sem[1],1);
 		//}
 	}
 	return 0;
@@ -127,24 +127,30 @@ static int proceedServerMessage(worklist* w,char msg_type){
 	event * e_e;
 	if (msg_type==MESSAGE_ROOM_STATUS){ //packet [mes(char)token(int)status(short)]
 		recvData(w->sock,&token,sizeof(token));
-		t_semop(t_sem.room,&sem[0],1);
-		r_r=roomGetByToken(token);
-		t_semop(t_sem.room,&sem[1],1);
+		int port;
+		short status;
 //		printf("room\n");
-		if (r_r==0)
-			return 1;
 //		printf("need %d\n",sizeof(room->port));
-		recvData(w->sock,&r_r->port,sizeof(r_r->port)); //int
+		recvData(w->sock,&port,sizeof(port)); //int
 //		printf("port -> %hd\n",r_r->port);
-		recvData(w->sock,&r_r->status,sizeof(r_r->status)); //short
+		recvData(w->sock,&status,sizeof(status)); //short
 //		printf("status -> %hd\n",room->status);
-		e_e=eventGet(r_r->type);
-		if (e_e==0)
-			return 1;
-		l_l=strlen(e_e->map);
-		sendData(w->sock,&l_l,sizeof(l_l));
-		sendData(w->sock,e_e->map,l_l);
-		r_r->timestamp=time(0);			
+		t_semop(t_sem.room,&sem[0],1); 
+		r_r=roomGetByToken(token);
+		if (r_r!=0){
+			r_r->port=port;
+			r_r->status=status;
+			e_e=eventGet(r_r->type);
+			if (e_e!=0){
+				l_l=strlen(e_e->map);
+				sendData(w->sock,&l_l,sizeof(l_l));
+				sendData(w->sock,e_e->map,l_l);
+			}else
+				close(w->sock);
+			r_r->timestamp=time(0);
+		}else
+			close(w->sock);
+		t_semop(t_sem.room,&sem[1],1);
 		return 0;
 	}
 	if (msg_type==MESSAGE_ROOM_RESULT){ //packet [mes(char)token(int)playertoken(int) ..
@@ -152,16 +158,16 @@ static int proceedServerMessage(worklist* w,char msg_type){
 		recvData(w->sock,&token,sizeof(token));
 		t_semop(t_sem.room,&sem[0],1);
 		r_r=roomGetByToken(token);
-		t_semop(t_sem.room,&sem[1],1);
 		//add another
-		if (r_r==0){
-			printf("cant find room\n");
-			return 1;
-		}
+		if (r_r!=0){
 		//add some data
 		
 		//at the end get status
-		recvData(w->sock,&r_r->status,sizeof(r_r->status)); //short
+			recvData(w->sock,&r_r->status,sizeof(r_r->status)); //short
+		}else
+			close(w->sock);
+		t_semop(t_sem.room,&sem[1],1);
+
 //		printf("get n set r status %d\n",r_r->status);
 		return 0;
 	}

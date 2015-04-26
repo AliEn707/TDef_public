@@ -41,19 +41,7 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 	player_info * pl=w->data;
 //	int token;
 	char msg;
-/*	if (msg_type==MESSAGE_MOVE){
-		recvData(w->sock,&msg,sizeof(msg));
-		if (msg_type==MESSAGE_LOBBY){
-			pl->status=PLAYER_IN_LOBBY;
-			setMask(pl->bitmask,BM_PLAYER_STATUS);
-		}
-		if (msg_type==MESSAGE_MAP){
-			pl->status=PLAYER_AT_MAP;
-			setMask(pl->bitmask,BM_PLAYER_STATUS);
-		}
-		return 0;
-	}
-*/	if (msg_type==MESSAGE_ROOM_ACT){
+	if (msg_type==MESSAGE_ROOM_ACT){
 		int room_type;
 //		int room_token;
 		int room_id;
@@ -85,23 +73,27 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 			r_r->status=ROOM_CREATED;
 			printf("token %d\n",r_r->token);
 			t_semop(t_sem.room,&sem[0],1);		
-			room_id=roomAdd(room_type,r_r);
-			t_semop(t_sem.room,&sem[1],1);
 			//pl->timestamp=time(0);
-			if (pl->room.id!=0)
+			if (pl->room.id!=0){
 				roomLeave(pl->room.type,pl->room.id);
-			
+			}
+			t_semop(t_sem.room,&sem[1],1);
+
 			pl->room.type=room_type;
 			r_r->type=room_type;
 			pl->room.id=room_id;
-			r_r->id=room_id;
 			r_r->players.max=2;//change to event players max
+
+			t_semop(t_sem.room,&sem[0],1);
 			roomEnter(pl->room.type,pl->room.id);
+			room_id=roomAdd(room_type,r_r);
+			r_r->id=room_id;
+			r_r->status=ROOM_PREPARE;
+			t_semop(t_sem.room,&sem[1],1);
 			
 			pl->room.token=rand();
 			//set to prepare/ server worker then ask for room,
 			//when room will create, room server conn and set ROOM_RUN
-			r_r->status=ROOM_PREPARE;
 //			setMask(pl->bitmask,BM_PLAYER_TIMESTAMP);
 			return 0;
 		}
@@ -119,6 +111,8 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 			}
 			t_semop(t_sem.room,&sem[0],1);
 			r_r=roomGet(room_type,room_id);
+			if (r_r!=0)
+				r_r->timestamp=time(0);
 			t_semop(t_sem.room,&sem[1],1);
 			if (r_r==0){
 				//send no rooms found
@@ -126,15 +120,19 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 			}
 			
 //			pl->timestamp=time(0);
-			if (pl->room.id!=0)
+			if (pl->room.id!=0){
+				t_semop(t_sem.room,&sem[0],1);
 				roomLeave(pl->room.type,pl->room.id);
-			
+				t_semop(t_sem.room,&sem[1],1);
+			}
 			pl->room.type=room_type;
 			pl->room.id=room_id;
 			
+			t_semop(t_sem.room,&sem[0],1);
 			roomEnter(pl->room.type,pl->room.id);
+			t_semop(t_sem.room,&sem[1],1);
+			
 			pl->room.token=rand();
-			r_r->timestamp=time(0);
 //			pl->status=PLAYER_IN_GAME;
 //			setMask(pl->bitmask,BM_PLAYER_STATUS);
 			//send conect to player
@@ -195,12 +193,8 @@ static int checkPlayerData(worklist* w,int _timestamp){
 //		printf("check room %p \n",room);
 		if (r_r!=0){
 //			printf("check room ts %d %d\n",pl->timestamp,r_r->timestamp);
-			if (pl->timestamp<=r_r->timestamp)
+			if (pl->timestamp<=r_r->timestamp){
 				if (r_r->status==ROOM_RUN){
-//					event * e_e;
-//					pl->timestamp=room->timestamp;
-//					pl->status=PLAYER_IN_GAME;
-//					setMask(pl->bitmask,BM_PLAYER_STATUS);
 					if (pl->room.timestamp!=r_r->timestamp){
 						//send player to connect
 						mes=MESSAGE_GAME_START;
@@ -218,6 +212,14 @@ static int checkPlayerData(worklist* w,int _timestamp){
 						pl->room.timestamp=r_r->timestamp;
 					}
 				}
+				if (r_r->status==ROOM_FAIL){
+					//need to leave room
+					t_semop(t_sem.room,&sem[0],1);
+					roomLeave(pl->room.type,pl->room.id);
+					t_semop(t_sem.room,&sem[1],1);
+					pl->room.id=0;
+				}
+			}
 		}else{
 			//set player not chose room
 			pl->room.id=0;
