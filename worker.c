@@ -24,14 +24,14 @@ static int checkEvent(void * n_n,event* e){
 		//do some stuff
 		mes=MESSAGE_EVENT_CHANGE;
 		sendData(w->sock,&mes,sizeof(mes));
-		sendData(w->sock,&bitmask,sizeof(bitmask));
+//		sendData(w->sock,&bitmask,sizeof(bitmask));
 		sendData(w->sock,&e->id,sizeof(e->id));
-		sendWorker(&e->$rooms,sizeof(e->$rooms));
-		if (checkMask(bitmask,BM_EVENT_MAP_NAME)){//only on player connect
-			l_l=strlen(e->map);
-			sendWorker(&l_l,sizeof(l_l));
-			sendWorker(e->map,l_l);
-		}
+//		sendWorker(&e->$rooms,sizeof(e->$rooms));
+//		if (checkMask(bitmask,BM_EVENT_MAP_NAME)){//only on player connect
+		l_l=strlen(e->map);
+		sendWorker(&l_l,sizeof(l_l));
+		sendWorker(e->map,l_l);
+//		}
 		//add another data
 	}//TODO: how to send data about remove
 	return 0;
@@ -49,10 +49,10 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 //		token=rand(); 
 		//get message type
 		recvData(w->sock,&msg,sizeof(msg));
-		printf("get mes %d\n",msg);
+		printf("got mes %d\n",msg);
 		//get room type
 		recvData(w->sock,&room_type,sizeof(room_type));
-		printf("get room type %d\n",room_type);
+		printf("got room type %d\n",room_type);
 		//get all data
 		
 		//if player not in lobby dont do anithing
@@ -81,17 +81,18 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 
 			pl->room.type=room_type;
 			r_r->type=room_type;
-			pl->room.id=room_id;
 			r_r->players.max=2;//change to event players max
 
 			t_semop(t_sem.room,&sem[0],1);
-			roomEnter(pl->room.type,pl->room.id);
 			room_id=roomAdd(room_type,r_r);
 			r_r->id=room_id;
+			pl->room.id=room_id;
+			roomEnter(pl->room.type,pl->room.id);
 			r_r->status=ROOM_PREPARE;
 			t_semop(t_sem.room,&sem[1],1);
 			
 			pl->room.token=rand();
+			setMask(pl->bitmask,BM_PLAYER_ROOM);
 			//set to prepare/ server worker then ask for room,
 			//when room will create, room server conn and set ROOM_RUN
 //			setMask(pl->bitmask,BM_PLAYER_TIMESTAMP);
@@ -114,10 +115,6 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 			if (r_r!=0)
 				r_r->timestamp=time(0);
 			t_semop(t_sem.room,&sem[1],1);
-			if (r_r==0){
-				//send no rooms found
-				return 0;
-			}
 			
 //			pl->timestamp=time(0);
 			if (pl->room.id!=0){
@@ -125,6 +122,13 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 				roomLeave(pl->room.type,pl->room.id);
 				t_semop(t_sem.room,&sem[1],1);
 			}
+			setMask(pl->bitmask,BM_PLAYER_ROOM);
+			if (r_r==0){
+				pl->room.id=0;
+				//send no rooms found
+				return 0;
+			}
+			
 			pl->room.type=room_type;
 			pl->room.id=room_id;
 			
@@ -146,7 +150,13 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 			//set token
 			return 0;
 		}
-	}	
+	}
+	if (msg_type==MESSAGE_INFO){
+		recvData(w->sock,&msg,sizeof(msg));
+		if (msg==MESSAGE_EVENT_INFO){ //not used
+			
+		}
+	}
 	printf("unknown message\n");
 	return 1;
 }
@@ -183,14 +193,13 @@ static int checkPlayerData(worklist* w,int _timestamp){
 	player_info * pl=w->data;
 	room * r_r;
 	char mes;
-//	if (pl->status==PLAYER_IN_LOBBY){
-//		printf("player in lobby\n");
+//	printf("player %d room_id %d\n",pl->id,pl->room.id);
 		//check player data
 	if (pl->room.id!=0){
 		t_semop(t_sem.room,&sem[0],1);
 		r_r=roomGet(pl->room.type,pl->room.id);
 		t_semop(t_sem.room,&sem[1],1);
-//		printf("check room %p \n",room);
+//		printf("check room %p \n",r_r);
 		if (r_r!=0){
 //			printf("check room ts %d %d\n",pl->timestamp,r_r->timestamp);
 			if (pl->timestamp<=r_r->timestamp){
@@ -214,16 +223,18 @@ static int checkPlayerData(worklist* w,int _timestamp){
 				}
 				if (r_r->status==ROOM_FAIL){
 					//need to leave room
+					printf("room fail, leave room\n");
 					t_semop(t_sem.room,&sem[0],1);
 					roomLeave(pl->room.type,pl->room.id);
 					t_semop(t_sem.room,&sem[1],1);
 					pl->room.id=0;
+					setMask(pl->bitmask,BM_PLAYER_ROOM);
 				}
 			}
 		}else{
 			//set player not chose room
 			pl->room.id=0;
-			//set player status not in lobby
+			setMask(pl->bitmask,BM_PLAYER_ROOM);
 		}
 	}
 		//
@@ -249,10 +260,22 @@ int sendPlayerData(worklist* w){
 		//send data to client
 //		setMask(pl->bitmask,BM_PLAYER_STATUS);
 	}
-//	printf("send bitmask %d",pl->bitmask);
 	//send bitmask
 	sendData(w->sock,&pl->bitmask,sizeof(pl->bitmask));
+	printf("sent bitmask %d\n",pl->bitmask);
+	sendData(w->sock,&pl->id,sizeof(pl->id));
+	printf("sent pl->id %d\n",pl->id);
+	if (checkMask(pl->bitmask,BM_PLAYER_ROOM)){
+		//send data to client
+		sendData(w->sock,&pl->room.type,sizeof(pl->room.type));
+		printf("sent pl->room.type %d\n",pl->room.type);
+		sendData(w->sock,&pl->room.id,sizeof(pl->room.id));
+		printf("sent pl->room.id %d\n",pl->room.id);
+//		setMask(pl->bitmask,BM_PLAYER_STATUS);
+	}
+//	printf("send bitmask %d",pl->bitmask);
 	pl->bitmask=0;
+	
 	return 0;
 }
 

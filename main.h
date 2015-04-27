@@ -18,6 +18,39 @@
 #include <time.h>
 #include <pthread.h>
 
+#define BIT_1 1
+#define BIT_2 2
+#define BIT_3 4
+#define BIT_4 8
+#define BIT_5 16
+#define BIT_6 32
+#define BIT_7 64
+#define BIT_8 128
+#define BIT_9 256
+#define BIT_10 512
+#define BIT_11 1024
+#define BIT_12 2048
+#define BIT_13 4096
+#define BIT_14 8192
+#define BIT_15 16384
+#define BIT_16 32768
+#define BIT_17 65536
+#define BIT_18 131072
+#define BIT_19 262144
+#define BIT_20 524288
+#define BIT_21 1048576
+#define BIT_22 2097152
+#define BIT_23 4194304
+#define BIT_24 8388608
+#define BIT_25 16777216
+#define BIT_26 33554432
+#define BIT_27 67108864
+#define BIT_28 134217728
+#define BIT_29 268435456
+#define BIT_30 536870912
+#define BIT_31 1073741824
+#define BIT_32 2147483648
+
 #define PLAYER_MAX 200000
 #define WORKER_NUM 1
 
@@ -37,11 +70,12 @@
 #define ROOM_CREATED -1
 
 //player bitmasks
-#define BM_PLAYER_CONNECTED 1
-#define BM_PLAYER_STATUS 2
-#define BM_PLAYER_TIMESTAMP 4
+#define BM_PLAYER_CONNECTED BIT_1
+#define BM_PLAYER_STATUS BIT_2
+#define BM_PLAYER_TIMESTAMP BIT_3
+#define BM_PLAYER_ROOM BIT_3
 //event bitmasks
-#define BM_EVENT_MAP_NAME 1
+#define BM_EVENT_MAP_NAME BIT_1
 
 //out message types
 #define MESSAGE_PLAYER_CHANGE 1
@@ -54,13 +88,16 @@
 //in message types
 #define MESSAGE_ROOM_ACT 76//'L' ask for add or edit rooms
 #define MESSAGE_MOVE 77//'M'  ask for change status
+#define MESSAGE_INFO 73//'I'  ask for info about changes
 //move actions
-#define MESSAGE_LOBBY 78 //N  move to lobby
-#define MESSAGE_MAP 77 //M  move to map
+#define MESSAGE_LOBBY 78 //'N'  move to lobby
+#define MESSAGE_MAP 77 //'M'  move to map
 //room actions
 #define MESSAGE_CREATE_ROOM 99 //'c'
 #define MESSAGE_FAST_ROOM 2
 #define MESSAGE_FIND_ROOM 4
+//info actions
+#define MESSAGE_EVENT_INFO 1
 
 //messages from servers
 #define MESSAGE_ROOM_STATUS 1

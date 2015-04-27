@@ -95,13 +95,14 @@ static int checkRoomStatus(room * r){
 				//we get answer from all servers, cant create room
 				printf("cant get room\n");
 			r->status=ROOM_FAIL;
+			r->timestamp=time(0);
 			return 0;
 		}
 	}
 	if (r->status==ROOM_ERROR){
 		//ask for room
 	}
-	if (r->status==ROOM_FAIL){
+/*	if (r->status==ROOM_FAIL){
 		//room is free
 		//if (r->users==0){
 		room* _r;
@@ -116,7 +117,7 @@ static int checkRoomStatus(room * r){
 		t_semop(t_sem.room,&sem[1],1);
 		//}
 	}
-	return 0;
+*/	return 0;
 }
 
 static int proceedServerMessage(worklist* w,char msg_type){
