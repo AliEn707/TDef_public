@@ -96,7 +96,7 @@ int dbFillEvents(){
 	//do some stuff
 	event * e_e;
 	e_e=eventAdd(1);
-	sprintf(e_e->map,"4");
+	sprintf(e_e->map,"pvz11_11");
 	events_timestamp=time(0);
 	return 0;
 }

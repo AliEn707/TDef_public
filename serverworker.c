@@ -92,8 +92,8 @@ static int checkRoomStatus(room * r){
 						return 0;
 					}
 				}
-				//we get answer from all servers, cant create room
-				printf("cant get room\n");
+			//we get answer from all servers, cant create room
+			printf("cant get room\n");
 			r->status=ROOM_FAIL;
 			r->timestamp=time(0);
 			return 0;
@@ -165,6 +165,7 @@ static int proceedServerMessage(worklist* w,char msg_type){
 		
 		//at the end get status
 			recvData(w->sock,&r_r->status,sizeof(r_r->status)); //short
+			r_r->status=ROOM_FAIL;
 		}else
 			close(w->sock);
 		t_semop(t_sem.room,&sem[1],1);

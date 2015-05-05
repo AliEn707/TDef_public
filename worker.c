@@ -37,7 +37,7 @@ static int checkEvent(void * n_n,event* e){
 	return 0;
 }
 
-int proceedPlayerMessage(worklist* w,char msg_type){
+static int proceedPlayerMessage(worklist* w,char msg_type){
 	player_info * pl=w->data;
 //	int token;
 	char msg;
@@ -162,7 +162,7 @@ int proceedPlayerMessage(worklist* w,char msg_type){
 }
 
 
-int recvPlayerData(worklist* w){
+static inline int recvPlayerData(worklist* w){
 	int i;
 	char msg_type;
 //	printf("try to get message\n");
@@ -246,7 +246,7 @@ static int checkPlayerData(worklist* w,int _timestamp){
 	return 0;
 }
 
-int sendPlayerData(worklist* w){
+static inline int sendPlayerData(worklist* w){
 //	char msg_type;
 	player_info * pl=w->data;
 	char mes;
