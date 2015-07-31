@@ -1,3 +1,3 @@
 #!/bin/sh
-uname -m
-gcc *.c *.cpp -lm -lpthread -lstdc++ -Wall -g -o "public"
+uname -m 
+gcc *.c *.cpp -I/usr/include/postgresql/ -lm -lpthread -lstdc++ -lpq -Wall -g -o "public"

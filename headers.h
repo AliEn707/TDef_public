@@ -15,3 +15,4 @@
 #include "events.h"
 #include "db.h"
 
+#include "postgres.h"
