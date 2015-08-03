@@ -1,15 +1,16 @@
+
 int dbConnect(char * cparams);
-
 void dbClose();
-
+//chack connection and reconnect if needed
 int dbCheck();
 
 int dbExec(char * query);
+void pgClear();
 
 int dbRows();
-
 int dbColumns();
 
+//get last error
 char* dbError();
 
 //number of column by name
