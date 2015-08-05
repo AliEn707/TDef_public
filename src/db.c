@@ -35,7 +35,6 @@ player_info * dbAuth(worklist * client){
 	pl->bitmask=0;
 //	pl->status=PLAYER_CONNECTED;
 	pl->conn=CONNECTED;
-//	pl->id=client->id;
 	//get name 
 	$name=rand();
 	//send salt
@@ -45,14 +44,14 @@ player_info * dbAuth(worklist * client){
 	//get name size
 	if (recvData(client->sock,&$name,sizeof($name))<=0)
 		return 0;
-	printf("get size of name %d\n",$name);
+	printf("got size of name %d\n",$name);
 	if ($name!=0){
 		if (recvData(client->sock,name,$name)<=0) //change to anblock try to get
 			return 0;
-		printf("get name %s\n",name);
+		printf("got name %s\n",name);
 		if (recvData(client->sock,&token,sizeof(token))<=0)
 			return 0;
-		printf("get token %d\n",token);
+		printf("got token %d\n",token);
 	}else {
 		//something strange
 		//set first char of name to 0 if error 

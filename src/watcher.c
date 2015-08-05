@@ -41,7 +41,7 @@ int clientCheck(worklist * client){
 			
 			//add player to config.player.tree
 			t_semop(t_sem.player,&sem[0],1);
-				if (bintreeAdd(&config.player.tree,client->id,pl)==0){
+				if (bintreeAdd(&config.player.tree,pl->id,pl)==0){
 					perror("bintreeAdd player_info");
 					close(client->sock);
 					client->id=delPlayerId(client->id);
@@ -120,6 +120,8 @@ pthread_t  startWatcher(int id){
 	
 	if(pthread_create(&th,0,threadWatcher,arg)!=0)
 		return 0;
+	
+//	prctl(PR_SET_NAME, "TDef public watcher",0,0,0);
 	return th;
 }
 

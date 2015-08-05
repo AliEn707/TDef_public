@@ -53,7 +53,9 @@ void * threadListener(void * arg){
 	
 //	time=1000/20;
 	//get sockets
+	printf("Listen for servers on %d\n",config.serverworker.port);
 	config.serverworker.sock=startServer(config.serverworker.port);
+	printf("Listen for clients on %d\n",config.player.port);
 	config.player.sock=startServer(config.player.port);
 	//need for select
 	max_fd=config.player.sock>config.serverworker.sock?config.player.sock:config.serverworker.sock;

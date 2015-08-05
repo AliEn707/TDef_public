@@ -12,6 +12,7 @@
 //#include <sys/shm.h>
 #include <sys/msg.h>
 #include <sys/socket.h>
+//#include <sys/prctl.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -210,6 +211,11 @@ struct {
 		pthread_t thread;
 	} serverworker;
 	
+	short debug;
+	short daemon;
+	short workers_num;
+	char* log_file;
+	char* pid_file;
 } config_t;
 
 

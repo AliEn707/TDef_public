@@ -1,7 +1,16 @@
-#include <libpq-fe.h>
+﻿#include <libpq-fe.h>
 
 
 #define print_error() printf("%s",PQerrorMessage(connection))
+
+/*
+╔══════════════════════════════════════════════════════════════╗
+║ functions to work with postgres db							       ║
+║ created by Dennis Yarikov						                       ║
+║ sep 2014									                       ║
+╚══════════════════════════════════════════════════════════════╝
+*/
+
 
 static PGconn *connection=0;
 
