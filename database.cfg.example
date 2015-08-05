@@ -1,0 +1,4 @@
+host=localhost
+dbname=dbname
+user=dbuser
+password=passwd

@@ -9,16 +9,13 @@
 ╚══════════════════════════════════════════════════════════════╝
 */
 
-#define SIZE_OF_PASSWD 32
-
 //check player auth and create player_info struct or ret 0
 player_info * dbAuth(worklist * client){
 	player_info * pl;
 	int $name;
 	char name[50];
-	char passwd[50];
+	int token;
 	memset(name,0,sizeof(name));
-	memset(passwd,0,sizeof(passwd));
 	if ((newPlayerId())<0){
 		//not have ids
 		close(client->sock);
@@ -53,9 +50,9 @@ player_info * dbAuth(worklist * client){
 		if (recvData(client->sock,name,$name)<=0) //change to anblock try to get
 			return 0;
 		printf("get name %s\n",name);
-		if (recvData(client->sock,passwd,SIZE_OF_PASSWD)<=0)
+		if (recvData(client->sock,&token,sizeof(token))<=0)
 			return 0;
-		printf("get passwd %s\n",passwd);
+		printf("get token %d\n",token);
 	}else {
 		//something strange
 		//set first char of name to 0 if error 
