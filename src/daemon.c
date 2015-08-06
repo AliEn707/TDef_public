@@ -1,9 +1,56 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <signal.h>
+
+int watchDog(int (core)()){
+	int pid=0;
+	int s_s;
+	sigset_t  sigset;
+	siginfo_t siginfo;
+	
+	sigemptyset(&sigset);
+ 
+	sigaddset(&sigset, SIGQUIT);
+	sigaddset(&sigset, SIGINT);
+	sigaddset(&sigset, SIGTERM);
+ 
+	sigaddset(&sigset, SIGCHLD);
+ 
+//	sigaddset(&sigset, SIGUSR1);
+	sigprocmask(SIG_BLOCK, &sigset, NULL);
+ 
+	
+	while(1){
+		if (pid==0){
+			pid=fork();
+			if (pid<0){
+				exit(1);
+			}
+			if (pid==0){
+				core();
+				exit(1);
+			}
+		}
+		if (pid>0){
+			sigwaitinfo(&sigset, &siginfo);
+			switch(siginfo.si_signo){
+				case SIGCHLD:
+					waitpid(pid,&s_s,0);  
+					pid=0;
+					break;
+				default:
+					kill(pid, SIGTERM);
+					exit(0);
+			}
+		}
+	}
+	return 0;
+}
 
 //TODO: add signal processing
 int daemonize(char* pid_file, int (core)()){
@@ -50,7 +97,20 @@ int daemonize(char* pid_file, int (core)()){
 	close(STDERR_FILENO);
 	
 	//some work
-	core();
+	watchDog(core);
 	
 	return (0);
 }
+
+int test(){
+	printf("test \n");
+	sleep(2);
+	printf("exiting\n");
+	return 0;
+}
+	
+
+int main(){
+	daemonize(0,test);
+}
+
