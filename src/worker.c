@@ -314,6 +314,7 @@ void * threadWorker(void * arg){
 					//set player lost connection
 					((player_info*)(tmp->data))->conn=FAIL;
 					tmp=worklistDel(task,tmp->id);
+					config.worker[id].client_num--;
 				}
 			}
 		t_semop(worker_sem,&sem[1],1);

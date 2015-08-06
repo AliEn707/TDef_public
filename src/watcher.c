@@ -93,6 +93,7 @@ void * threadWatcher(void * arg){
 					bintreeDel(&config.player.tree,tmp->id);
 					free(tmp->data);
 					tmp=worklistDel(&config.watcher.client,tmp->id);
+					config.watcher.client_num--;
 					printf("watcher del client\n");
 				}
 				//some work

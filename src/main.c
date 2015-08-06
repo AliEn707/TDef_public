@@ -68,18 +68,21 @@ int core(){
 	char buf[10];
 	struct sembuf _sem[2]={{0,-1,0},
 						  {0,1,0}};
+	
 	//clean config
 	memcpy(&sem,&_sem,sizeof(sem));
 	//set params
 	srand(time(0));
 	config.run=1;
-						  
+	
+	pgConnectFile("database.cfg");
 	dbFillEvents();
 	dbFillServers();
 	//set tasks for sheduller
 	
 	//start threads
 //	config.sheduller.thread=startSheduller(0);
+	config.updater.thread=startUpdater();
 	config.serverworker.thread=startServerWorker(0);
 	config.watcher.thread=startWatcher(0);
 	for(i=0;i<config.workers_num;i++)
@@ -97,6 +100,7 @@ int core(){
 	scanf("%s",buf);
 	printf("exiting\n");
 	config.run=0;
+	pgClose();
 	sleep(5);
 	cleanAll();
 	return 0;

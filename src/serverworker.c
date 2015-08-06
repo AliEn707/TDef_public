@@ -120,12 +120,25 @@ static int checkRoomStatus(room * r){
 */	return 0;
 }
 
-static int proceedServerMessage(worklist* w,char msg_type){
+static inline int proceedServerMessage(worklist* w,char msg_type){
 //	char msg;
 	short l_l;
 	int token;
 	room * r_r;
 	event * e_e;
+	if (msg_type==MESSAGE_UPDATE){ //packet [mes(char) ..
+		//had a request for update
+		int sock=dup(w->sock); //we close original later
+		//push it to updater
+		worklist * tmp;
+		t_semop(t_sem.updater,&sem[0],1);
+			//add client to serverworker
+			tmp=worklistAdd(&config.updater.task,0);
+			tmp->sock=sock;
+		t_semop(t_sem.updater,&sem[1],1);
+		//for delete it
+		return 1;
+	}
 	if (msg_type==MESSAGE_ROOM_STATUS){ //packet [mes(char)token(int)status(short)]
 		recvData(w->sock,&token,sizeof(token));
 		int port;
@@ -177,7 +190,7 @@ static int proceedServerMessage(worklist* w,char msg_type){
 	return 0;
 }
 
-static int recvServerData(worklist* w){
+static inline int recvServerData(worklist* w){
 	int i;
 	char msg_type;
 //	player_info * pl=w->data;
@@ -225,6 +238,7 @@ void * threadServerWorker(void * arg){
 					close(tmp->sock);
 					//delete client
 					tmp=worklistDel(&config.serverworker.client,tmp->id);
+					config.serverworker.client_num--;
 				}
 				
 			}

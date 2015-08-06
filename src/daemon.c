@@ -52,7 +52,6 @@ int watchDog(int (core)()){
 	return 0;
 }
 
-//TODO: add signal processing
 int daemonize(char* pid_file, int (core)()){
 	pid_t process_id = 0;
 	pid_t sid = 0;
@@ -110,7 +109,4 @@ int test(){
 }
 	
 
-int main(){
-	daemonize(0,test);
-}
 

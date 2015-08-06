@@ -1,22 +1,23 @@
 
-int dbConnect(char * cparams);
-void dbClose();
+int pgConnect(char * cparams);
+int pgConnectFile(char* config);
+void pgClose();
 //chack connection and reconnect if needed
-int dbCheck();
+int pgCheck();
 
-int dbExec(char * query);
+int pgExec(char * query);
 void pgClear();
 
-int dbRows();
-int dbColumns();
+int pgRows();
+int pgColumns();
 
 //get last error
-char* dbError();
+char* pgError();
 
 //number of column by name
-int dbNumber(char * name);
+int pgNumber(char * name);
 
 //size of value
-int dbSize(int row, int col);
+int pgSize(int row, int col);
 
-char *dbValue(int row, int col);
+char *pgValue(int row, int col);

@@ -106,6 +106,10 @@ void cleanAll(){
 		worklistErase(&config.worker[i].client);
 	}
 	
+	if (t_sem.db!=0)	
+		if (t_semctl(t_sem.db,0,IPC_RMID)<0)
+			perror("t_semctl db");
+		
 	if (t_sem.serverworker!=0)	
 		if (t_semctl(t_sem.serverworker,0,IPC_RMID)<0)
 			perror("t_semctl serverworker");
@@ -123,6 +127,11 @@ void cleanAll(){
 		if (t_semctl(t_sem.sheduller,0,IPC_RMID)<0)
 			perror("t_semctl sheduller");
 	worklistErase(&config.sheduller.task);
+	
+	if (t_sem.updater!=0)	
+		if (t_semctl(t_sem.updater,0,IPC_RMID)<0)
+			perror("t_semctl sheduller");
+	worklistErase(&config.updater.task);
 	
 	//clear msg
 	if (t_sem.sheduller!=0)	

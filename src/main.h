@@ -103,7 +103,9 @@
 //messages from servers
 #define MESSAGE_ROOM_STATUS 1
 #define MESSAGE_ROOM_RESULT 2
-
+#define MESSAGE_UPDATE 3
+//messages for updater
+#define MESSAGE_UPDATE_NPC_TYPES 1
 //connection
 #define CONNECTED 1
 #define FAIL 0
@@ -192,6 +194,13 @@ struct {
 		worklist task;
 		pthread_t thread;
 	} sheduller;
+	
+	struct{
+		int msg;
+//		int sem;
+		worklist task;
+		pthread_t thread;
+	} updater;
 	
 	struct{
 		int client_num;

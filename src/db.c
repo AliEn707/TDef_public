@@ -1,4 +1,4 @@
-#include "headers.h"
+﻿#include "headers.h"
 
 
 /*
@@ -8,6 +8,8 @@
 ║ sep 2014									                       ║
 ╚══════════════════════════════════════════════════════════════╝
 */
+
+
 
 //check player auth and create player_info struct or ret 0
 player_info * dbAuth(worklist * client){
@@ -71,6 +73,12 @@ player_info * dbAuth(worklist * client){
 	return pl;
 }
 
+int dbGetNpcTypes(int t){
+	char str[300];
+	sprintf(str,"select * from tdef_type_npcs where updated_at > '%s'",dbTime(t));
+	return pgExec(str);
+}
+
 int dbGetPlayer(player_info * pl, char * name){
 	if (name==0)
 		return -1;
@@ -95,5 +103,10 @@ int dbFillEvents(){
 	sprintf(e_e->map,"pvz11_11");
 	events_timestamp=time(0);
 	return 0;
+}
+
+char* dbTime(int t){
+	time_t _t=t;
+	return asctime(gmtime(&_t));
 }
 

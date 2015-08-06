@@ -23,8 +23,10 @@ typedef struct t_sem_t* t_sem_t;
 */
 
 struct t_sem_struct{
+	t_sem_t db;
 	t_sem_t watcher;
 	t_sem_t sheduller;
+	t_sem_t updater;
 	t_sem_t serverworker;
 	t_sem_t room;
 	t_sem_t player;

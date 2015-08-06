@@ -1,5 +1,5 @@
 ﻿#include <libpq-fe.h>
-
+#include <stdio.h>
 
 #define print_error() printf("%s",PQerrorMessage(connection))
 
@@ -22,23 +22,44 @@ int pgConnect(char * cparams){
 	return PQstatus(connection); 
 }
 
+int pgConnectFile(char* config){
+	FILE*f_f;
+	char data[1000];
+	if ((f_f=fopen(config,"rt"))==0){
+		perror("open database.cfg");
+		return -1;
+	}
+	fread(data,1,sizeof(data),f_f);
+	fclose(f_f);
+	return pgConnect(data);	
+}
+
 void pgClose(){
+	if (connection==0)
+		return;
 	PQfinish(connection);
+	connection=0;
 }
 
 int pgCheck(){
+	if (connection==0)
+		return 1;
 	if (PQstatus(connection)!=0)
 		PQreset(connection);
 	return PQstatus(connection);
 }
 
 void pgClear(){
+	if (connection==0)
+		return;
 	if (last_result!=0) 
 		PQclear(last_result);
 	last_result=0;
 }
 
 int pgExec(char * query){
+	if (connection==0)
+		return 1;
 	pgClear();
 	last_result= PQexec(connection,query);
 	return PQresultStatus(last_result);
@@ -46,6 +67,8 @@ int pgExec(char * query){
 
 
 int pgRows(){
+	if (connection==0)
+		return 0;
 	if (last_result)
 		return PQntuples(last_result);
 	else
@@ -53,6 +76,8 @@ int pgRows(){
 }
 
 int pgColumns(){
+	if (connection==0)
+		return 0;
 	if (last_result)
 		return PQnfields(last_result);
 	else
@@ -64,14 +89,20 @@ char* pgError(){
 }
 
 int pgNumber(char * name){
+	if (connection==0)
+		return -1;
 	return PQfnumber(last_result,name);
 }
 
 int pgSize(int row, int col){
+	if (connection==0)
+		return 0;
 	return PQgetlength(last_result, row, col);
 }
 
 char *pgValue(int row, int col){
+	if (connection==0)
+		return "";
 	return PQgetvalue(last_result,row,col);
 }
 /*

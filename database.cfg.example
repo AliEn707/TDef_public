@@ -1,4 +1,5 @@
 host=localhost
-dbname=dbname
+port=5432
+dbname=wss_devel
 user=dbuser
 password=passwd
