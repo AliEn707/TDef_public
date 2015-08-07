@@ -106,6 +106,9 @@
 #define MESSAGE_UPDATE 3
 //messages for updater
 #define MESSAGE_UPDATE_NPC_TYPES 1
+#define MESSAGE_UPDATE_TOWER_TYPES 2
+#define MESSAGE_UPDATE_BULLET_TYPES 3
+#define MESSAGE_UPDATE_MAPS 4
 //connection
 #define CONNECTED 1
 #define FAIL 0

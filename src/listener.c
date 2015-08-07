@@ -12,7 +12,7 @@
 #define PRIVATE_POLICY "<cross-domain-policy><allow-access-from domain=\"*\" to-ports=\"*\" /></cross-domain-policy>"
 
 
-int startServer(port){
+int startServer(int port){
 	int listener;
 	struct sockaddr_in addr;
 	

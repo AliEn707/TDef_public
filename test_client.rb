@@ -9,12 +9,19 @@ s = TCPSocket.open(hostname, port)
 
 #puts connected
 s.write [3].pack("c")
-s.write [1].pack("c")
-s.write [1].pack("l")
+s.write [4].pack("c")
+#s.write [1].pack("l")
 loop do
- a=s.read(4).unpack("l")
-break if (a[0]==0)
-puts s.read(a[0])
+	p a=s.read(4).unpack("l")
+	break if (a[0]==0)
+	puts s.read(a[0])
+	 s.write [1].pack("l")
+	loop do
+		puts "file"
+		p a=s.read(4).unpack("l")
+		break if (a[0]==0)
+		puts s.read(a[0])
+	end
 end
 #while line = s.gets   # Read lines from the socket
   #puts line.chop      # And print with platform line terminator

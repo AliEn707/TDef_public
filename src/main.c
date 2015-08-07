@@ -75,7 +75,7 @@ int core(){
 	srand(time(0));
 	config.run=1;
 	
-	pgConnectFile("database.cfg");
+	dbConnect("database.cfg");
 	dbFillEvents();
 	dbFillServers();
 	//set tasks for sheduller

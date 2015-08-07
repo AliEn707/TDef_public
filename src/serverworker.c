@@ -200,6 +200,7 @@ static inline int recvServerData(worklist* w){
 		if (recv(w->sock,&msg_type,sizeof(msg_type),MSG_DONTWAIT)<=0){
 			//have error check what is it
 			if (errno==EAGAIN){
+				errno=0;
 				sleep(0);
 				continue;
 			}else{

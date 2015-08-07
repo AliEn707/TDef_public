@@ -1,6 +1,6 @@
 
 int pgConnect(char * cparams);
-int pgConnectFile(char* config);
+
 void pgClose();
 //chack connection and reconnect if needed
 int pgCheck();

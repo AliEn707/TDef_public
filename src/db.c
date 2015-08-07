@@ -9,6 +9,17 @@
 ╚══════════════════════════════════════════════════════════════╝
 */
 
+int dbConnect(char* config){
+	FILE*f_f;
+	char data[1000];
+	if ((f_f=fopen(config,"rt"))==0){
+		perror("open database.cfg");
+		return -1;
+	}
+	fread(data,1,sizeof(data),f_f);
+	fclose(f_f);
+	return pgConnect(data);	
+}
 
 
 //check player auth and create player_info struct or ret 0
@@ -73,12 +84,6 @@ player_info * dbAuth(worklist * client){
 	return pl;
 }
 
-int dbGetNpcTypes(int t){
-	char str[300];
-	sprintf(str,"select * from tdef_type_npcs where updated_at > '%s'",dbTime(t));
-	return pgExec(str);
-}
-
 int dbGetPlayer(player_info * pl, char * name){
 	if (name==0)
 		return -1;
@@ -108,5 +113,39 @@ int dbFillEvents(){
 char* dbTime(int t){
 	time_t _t=t;
 	return asctime(gmtime(&_t));
+}
+
+///database selects 
+static char str[500];
+
+int dbSelect(char* table){
+	sprintf(str,"SELECT * FROM %s;", table);
+	return pgExec(str);
+}
+
+int dbSelectWhere(char* table, char* field, char* cmp, char* value){
+	sprintf(str,"SELECT * FROM %s WHERE (%s %s %s);", table, field, cmp, value);
+	return pgExec(str);
+}
+
+int dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, int timestamp){
+//	printf("SELECT * FROM %s WHERE (%s %s %s and updated_at > '%s');\n", table, field,cmp,value, dbTime(timestamp)); //can be used for logging
+	sprintf(str,"SELECT * FROM %s WHERE (%s %s %s and updated_at > '%s');", table, field,cmp,value, dbTime(timestamp));
+	return pgExec(str);
+}
+
+int dbSelectField(char* table, char* field){
+	sprintf(str,"SELECT %s FROM %s;", field, table);
+	return pgExec(str);
+}
+
+int dbSelectNewer(char* table, int timestamp){
+	sprintf(str,"SELECT * FROM %s WHERE updated_at > '%s';", table, dbTime(timestamp));
+	return pgExec(str);
+}
+
+int dbSelectFieldNewer(char* table,char* field, int timestamp){
+	sprintf(str,"SELECT %s FROM %s WHERE updated_at > '%s';", field, table, dbTime(timestamp));
+	return pgExec(str);
 }
 

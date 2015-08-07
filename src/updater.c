@@ -9,34 +9,93 @@
 ╚══════════════════════════════════════════════════════════════╝
 */
 
+struct{
+	char str[30];
+}* map_names;
+
 static inline int proceedUpdaterMessage(worklist* w,char msg_type){
 	int i;
 	char t_t[100];
 	int len;
-	if (msg_type==MESSAGE_UPDATE_NPC_TYPES){ //packet [mes(char) ..
-		int timestamp;
+	char* value;
+	int rows;
+	int timestamp;
+	if (msg_type==MESSAGE_UPDATE_MAPS){
+		t_semop(t_sem.db,&sem[0],1);
+			dbSelectField("tdef_maps","name");
+			int name=pgNumber("name");
+			rows=pgRows();
+			map_names=malloc(rows*sizeof(*map_names));
+			memset(map_names,0,rows*sizeof(*map_names));
+			for(i=0;i<rows;i++){
+				strcpy(map_names[i].str,pgValue(i,name));
+			}
+		t_semop(t_sem.db,&sem[1],1);
+		for(i=0;i<rows;i++){
+			len=strlen(map_names[i].str);
+			sendData(w->sock,&len,sizeof(len));
+			sendData(w->sock,map_names[i].str,len);
+			if(recvData(w->sock,&timestamp,sizeof(timestamp))>0){
+				sprintf(t_t,"'%s'",map_names[i].str);
+				t_semop(t_sem.db,&sem[0],1);
+					dbSelectWhereNewer("tdef_maps","name","=",t_t,timestamp);
+					if (pgRows()>0){
+						int data=pgNumber("data");
+						value=pgValue(0,data);
+						len=strlen(value);
+						sendData(w->sock,&len,sizeof(len));
+						sendData(w->sock,value,len);
+						sprintf(t_t,"\n");
+						len=strlen(t_t);
+						sendData(w->sock,&len,sizeof(len));
+						sendData(w->sock,t_t,len);
+					}
+				t_semop(t_sem.db,&sem[1],1);
+			}
+			len=0;
+			sendData(w->sock,&len,sizeof(len));
+		}
+		free(map_names);
+		len=0;
+		sendData(w->sock,&len,sizeof(len));
+		return 0;
+	}
+	if (msg_type==MESSAGE_UPDATE_NPC_TYPES ||
+	    msg_type==MESSAGE_UPDATE_TOWER_TYPES ||
+	    msg_type==MESSAGE_UPDATE_BULLET_TYPES ){ //packet [mes(char) ..
+		char * TYPES[]={
+			[MESSAGE_UPDATE_NPC_TYPES]="tdef_type_npcs",
+			[MESSAGE_UPDATE_TOWER_TYPES]="tdef_type_towers",
+			[MESSAGE_UPDATE_BULLET_TYPES]="tdef_type_bullets"
+		};
 		recvData(w->sock,&timestamp,sizeof(timestamp));
 		t_semop(t_sem.db,&sem[0],1);
-			dbGetNpcTypes(timestamp);
-			int rows=pgRows();
-			int params=pgNumber("params");
-			int id=pgNumber("id");
-			for(i=0;i<rows;i++){
-				char* value=pgValue(i,id);
-				sprintf(t_t,"id %s\n",value);
-				len=strlen(t_t);
-				sendData(w->sock,&len,sizeof(len));
-				sendData(w->sock,t_t,len);
-				value=pgValue(i,params);
-				len=strlen(value);
-				sendData(w->sock,&len,sizeof(len));
-				sendData(w->sock,value,len);
-				t_semop(t_sem.db,&sem[1],1);
-				sprintf(t_t,"//-\n\n");
-				len=strlen(t_t);
-				sendData(w->sock,&len,sizeof(len));
-				sendData(w->sock,t_t,len);
-			}
+			dbSelectFieldNewer(TYPES[(int)msg_type], "id", timestamp);
+			rows=pgRows();
+		t_semop(t_sem.db,&sem[1],1);
+		if (rows!=0){
+			t_semop(t_sem.db,&sem[0],1);
+				dbSelectNewer(TYPES[(int)msg_type], timestamp);
+				rows=pgRows();
+				int params=pgNumber("params");
+				int id=pgNumber("id");
+				for(i=0;i<rows;i++){
+					sprintf(t_t,"id %s\n",pgValue(i,id));
+					len=strlen(t_t);
+					sendData(w->sock,&len,sizeof(len));
+					sendData(w->sock,t_t,len);
+					value=pgValue(i,params);
+					len=strlen(value);
+					sendData(w->sock,&len,sizeof(len));
+					sendData(w->sock,value,len);
+					
+					sprintf(t_t,"//- %s\n\n",pgValue(i,id));
+					len=strlen(t_t);
+					sendData(w->sock,&len,sizeof(len));
+					sendData(w->sock,t_t,len);
+				}
+			t_semop(t_sem.db,&sem[1],1);
+		}
 		len=0;
 		sendData(w->sock,&len,sizeof(len));
 		return 0;
@@ -54,6 +113,7 @@ static inline int recvUpdaterData(worklist* w){
 		if (recv(w->sock,&msg_type,sizeof(msg_type),MSG_DONTWAIT)<=0){
 			//have error check what is it
 			if (errno==EAGAIN){
+				errno=0;
 				sleep(0);
 				continue;
 			}else{
@@ -102,7 +162,6 @@ void * threadUpdater(void * arg){
 pthread_t startUpdater(){
 	pthread_t th=0;
 	int * arg;
-	
 	if ((arg=malloc(sizeof(int)))==0)
 		perror("malloc startUpdater");
 	*arg=0;

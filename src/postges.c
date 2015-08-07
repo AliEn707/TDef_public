@@ -15,23 +15,12 @@
 static PGconn *connection=0;
 
 static PGresult * last_result=0;
+
 //char data[]="host=localhost\ndbname=wss_devel\nuser=dbuser\npassword=passwd";
 
 int pgConnect(char * cparams){
 	connection=PQconnectdb(cparams);
 	return PQstatus(connection); 
-}
-
-int pgConnectFile(char* config){
-	FILE*f_f;
-	char data[1000];
-	if ((f_f=fopen(config,"rt"))==0){
-		perror("open database.cfg");
-		return -1;
-	}
-	fread(data,1,sizeof(data),f_f);
-	fclose(f_f);
-	return pgConnect(data);	
 }
 
 void pgClose(){
@@ -105,6 +94,8 @@ char *pgValue(int row, int col){
 		return "";
 	return PQgetvalue(last_result,row,col);
 }
+
+
 /*
 int main(){
 	pgConnect(data);
