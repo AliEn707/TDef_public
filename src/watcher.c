@@ -90,8 +90,7 @@ void * threadWatcher(void * arg){
 			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
 				if (clientCheck(tmp)!=0){
 					delPlayerId(tmp->id);
-					bintreeDel(&config.player.tree,tmp->id);
-					free(tmp->data);
+					bintreeDel(&config.player.tree,tmp->id,free);//tmp->data == pl
 					tmp=worklistDel(&config.watcher.client,tmp->id);
 					config.watcher.client_num--;
 					printf("watcher del client\n");

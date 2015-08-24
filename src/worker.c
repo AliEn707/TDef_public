@@ -16,22 +16,26 @@ static int checkEvent(void * n_n,event* e){
 	player_info * pl=w->data;
 	short l_l;
 	char mes;
+	if (checkMask(pl->bitmask,BM_PLAYER_CONNECTED))
+		bintreeAdd(&pl->events.available, e->id, (void*)1);
 	if (pl->timestamp<e->timestamp){
-		int bitmask=0;
-		if (checkMask(pl->bitmask,BM_PLAYER_CONNECTED))
-			bitmask|=BM_EVENT_MAP_NAME;
 //		printf("send event %d\n",e->id);
 		//do some stuff
+		if (bintreeGet(&pl->events.available, e->id)==0)
+			printf("event not accessable");
 		mes=MESSAGE_EVENT_CHANGE;
 		sendData(w->sock,&mes,sizeof(mes));
 //		sendData(w->sock,&bitmask,sizeof(bitmask));
 		sendData(w->sock,&e->id,sizeof(e->id));
 //		sendWorker(&e->$rooms,sizeof(e->$rooms));
-//		if (checkMask(bitmask,BM_EVENT_MAP_NAME)){//only on player connect
 		l_l=strlen(e->map);
-		sendWorker(&l_l,sizeof(l_l));
-		sendWorker(e->map,l_l);
-//		}
+		sendData(w->sock,&l_l,sizeof(l_l));
+		sendData(w->sock,e->map,l_l);
+		l_l=strlen(e->name);
+		sendData(w->sock,&l_l,sizeof(l_l));
+		sendData(w->sock,e->name,l_l);
+		bintreeDel(&pl->events.available, e->id, 0);
+		bintreeAdd(&pl->events.sent, e->id, (void*)1);
 		//add another data
 	}//TODO: how to send data about remove
 	return 0;

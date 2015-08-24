@@ -162,6 +162,11 @@ struct {
 		int id; //room that player attach
 		int timestamp;
 	} room;
+	struct {
+		bintree available;
+		bintree sent;
+		bintree done;
+	} events;
 	//base
 	int id;  //player id  from base ??
 	

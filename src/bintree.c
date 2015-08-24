@@ -1,4 +1,9 @@
+﻿#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
 #include "main.h"
+
 
 
 /*
@@ -10,10 +15,11 @@
 */
 
 
+
 int bintreeAdd(bintree* root,int key,void* data){
 	bintree* tmp=root;
 	int next;
-	printf("add key %d\n",key);
+//	printDebug("add key %d\n",key);
 	while(key>0){
 		next=(int)(key&1);
 		if(tmp->next[next]==0){
@@ -45,29 +51,30 @@ void * bintreeGet(bintree* root, int key){
 	return tmp->data;
 }
 
-int _bintreeDel(bintree* root, int key){
+int _bintreeDel(bintree* root, int key, void (f)(void*v)){
 	int get;
 	int next;
 	if (root==0)
 		return 0;
 	if (key==0){
-//		get=root->data;
+		if (f!=0)
+			f(root->data);
 //		free(root->data); //may be need
 		root->data=0;
 		if (root->next[0]==0 && root->next[1]==0){
 			free(root);
-			printf("free\n");
+//			printDebug("free\n");
 			return 1;
 		}
 		return 0;
 	}
 	next=key&1;
-	get=_bintreeDel(root->next[next],key>>1);
+	get=_bintreeDel(root->next[next],key>>1,f);
 //	free(root->next[next]);
 	if (get!=0){
 		root->next[next]=0;
 		if (root->next[(next+1)%2]==0){
-//			printf("%d %d\n",next,(next+1)%2);
+//			printDebug("%d %d\n",next,(next+1)%2);
 			free(root);
 			return 1;
 		}
@@ -75,10 +82,10 @@ int _bintreeDel(bintree* root, int key){
 	return 0;
 }
 
-int bintreeDel(bintree* root, int key){
+int bintreeDel(bintree* root, int key, void (f)(void*v)){
 	int get;
 	int next=key&1;
-	get=_bintreeDel(root->next[next],key>>1);
+	get=_bintreeDel(root->next[next],key>>1,f);
 	if (get!=0)
 		root->next[next]=0;
 	return get;
@@ -100,12 +107,14 @@ int bintreeDel(bintree* root, int key){
 	return 1;
 }
 */
-void bintreeErase(bintree * root){
+void bintreeErase(bintree * root,void (f)(void*v)){
 	if (root==0)
 		return;
-//	printf("y\n");
-	bintreeErase(root->next[0]);
-	bintreeErase(root->next[1]);
+//	printDebug("y\n");
+	bintreeErase(root->next[0],f);
+	bintreeErase(root->next[1],f);
+	if (f!=0)
+		f(root->data);
 	free(root->next[0]);
 	root->next[0]=0;
 	free(root->next[1]);
@@ -118,11 +127,11 @@ int main(){
 	memset(&r,0,sizeof(r));
 	bintreeAdd(&r,3,100);
 	bintreeAdd(&r,7,132);
-	printf("%d\n",bintreeGet(&r,3));
+	printDebug("%d\n",bintreeGet(&r,3));
 	bintreeDel(&r,3);
 //	bintreeDel(&r,3);
-	printf("%d\n",bintreeGet(&r,3));
-	printf("%d\n",bintreeGet(&r,7));
+	printDebug("%d\n",bintreeGet(&r,3));
+	printDebug("%d\n",bintreeGet(&r,7));
 	bintreeErase(&r);
 }
 */

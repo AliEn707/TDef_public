@@ -141,7 +141,7 @@ void cleanAll(){
 	if (t_sem.player!=0)	
 		if (t_semctl(t_sem.player,0,IPC_RMID)<0)
 			perror("t_semctl player");
-	bintreeErase(&config.player.tree);
+	bintreeErase(&config.player.tree, free);
 }
 
 /*

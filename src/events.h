@@ -4,7 +4,7 @@ struct {
 	int id;
 	int timestamp;
 	int $rooms;
-	char name[20];
+	char name[30];
 	char map[20];
 	int bitmask;
 } event;
