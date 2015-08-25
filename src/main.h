@@ -19,6 +19,8 @@
 #include <time.h>
 #include <pthread.h>
 
+#include "bintree.h"
+
 #define BIT_1 1
 #define BIT_2 2
 #define BIT_3 4
@@ -134,11 +136,6 @@ struct {
 	int type;	//==id event
 } room;
 
-typedef 
-struct bintree{
-	void * data;
-	struct bintree * next[2];
-} bintree;
 
 typedef
 struct worklist{
@@ -163,9 +160,11 @@ struct {
 		int timestamp;
 	} room;
 	struct {
-		bintree available;
-		bintree sent;
-		bintree done;
+		bintree available; //events need to proseed
+		bintree sent; //events sent to client
+		bintree done;  //done events
+		bintree droped;  //events need to remove from client
+		int timestamp;
 	} events;
 	//base
 	int id;  //player id  from base ??
@@ -228,6 +227,10 @@ struct {
 		pthread_t thread;
 	} serverworker;
 	
+	struct{
+		int timestamp;
+	} events;
+		
 	short debug;
 	short daemon;
 	short workers_num;

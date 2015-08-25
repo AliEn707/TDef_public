@@ -1,12 +1,15 @@
 
+
 typedef
 struct {
 	int id;
-	int timestamp;
+	int timestamp; //change on $rooms change 
 	int $rooms;
 	char name[30];
 	char map[20];
+	char single;
 	int bitmask;
+	bintree dependences;
 } event;
 
 

@@ -1,7 +1,6 @@
 #include "t_sem.h"
 
 #include "list.h"
-#include "bintree.h"
 #include "engine.h"
 
 #include "worker.h"

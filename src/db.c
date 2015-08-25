@@ -100,14 +100,14 @@ int dbFillServers(){
 	return 0;
 }
 
-static int events_timestamp=0; 
 int dbFillEvents(){
 	//do some stuff
 	event * e_e;
 	e_e=eventAdd(1);
 	sprintf(e_e->map,"pvz11_11");
 	sprintf(e_e->name,"#event");
-	events_timestamp=time(0);
+	//set timestamp;
+	config.events.timestamp=time(0);
 	return 0;
 }
 

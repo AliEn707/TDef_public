@@ -16,6 +16,7 @@
 */
 extern "C" {
 
+#include "bintree.h"
 #include "events.h"
 }
 

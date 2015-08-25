@@ -11,35 +11,6 @@
 
 #define sendWorker(x,y) send(w->sock,x,y,MSG_NOSIGNAL)
 
-static int checkEvent(void * n_n,event* e){
-	worklist* w=n_n;
-	player_info * pl=w->data;
-	short l_l;
-	char mes;
-	if (checkMask(pl->bitmask,BM_PLAYER_CONNECTED))
-		bintreeAdd(&pl->events.available, e->id, (void*)1);
-	if (pl->timestamp<e->timestamp){
-//		printf("send event %d\n",e->id);
-		//do some stuff
-		if (bintreeGet(&pl->events.available, e->id)==0)
-			printf("event not accessable");
-		mes=MESSAGE_EVENT_CHANGE;
-		sendData(w->sock,&mes,sizeof(mes));
-//		sendData(w->sock,&bitmask,sizeof(bitmask));
-		sendData(w->sock,&e->id,sizeof(e->id));
-//		sendWorker(&e->$rooms,sizeof(e->$rooms));
-		l_l=strlen(e->map);
-		sendData(w->sock,&l_l,sizeof(l_l));
-		sendData(w->sock,e->map,l_l);
-		l_l=strlen(e->name);
-		sendData(w->sock,&l_l,sizeof(l_l));
-		sendData(w->sock,e->name,l_l);
-		bintreeDel(&pl->events.available, e->id, 0);
-		bintreeAdd(&pl->events.sent, e->id, (void*)1);
-		//add another data
-	}//TODO: how to send data about remove
-	return 0;
-}
 
 static int proceedPlayerMessage(worklist* w,char msg_type){
 	player_info * pl=w->data;
@@ -194,12 +165,92 @@ static inline int recvPlayerData(worklist* w){
 	return 0;
 }
 
-static int checkPlayerData(worklist* w,int _timestamp){
+static inline int checkPlayerEvents(worklist * w,int _timestamp){
+	player_info * pl=w->data;
+	int sendEventChanged(event* e){
+		short l_l;
+		char mes;
+		if (e==0)
+			return 0;
+		mes=MESSAGE_EVENT_CHANGE;
+		sendData(w->sock,&mes,sizeof(mes));
+//		sendData(w->sock,&bitmask,sizeof(bitmask));
+		sendData(w->sock,&e->id,sizeof(e->id));
+//		sendWorker(&e->$rooms,sizeof(e->$rooms));
+		l_l=strlen(e->map);
+		sendData(w->sock,&l_l,sizeof(l_l));
+		sendData(w->sock,e->map,l_l);
+		l_l=strlen(e->name);
+		sendData(w->sock,&l_l,sizeof(l_l));
+		sendData(w->sock,e->name,l_l);
+		//
+		bintreeDel(&pl->events.available, e->id, 0);
+		bintreeAdd(&pl->events.sent, e->id, (void*)(long)e->id);
+		return 0;
+	}
+	int sendEventDroped(event* e){
+		if (e==0)
+			return 0;
+		//TODO: add sent info
+		bintreeDel(&pl->events.droped, e->id, 0);
+		return 0;
+	}
+	void checkEventAvailable(void* arg,int k,void*v){
+		sendEventChanged(eventGet((long)v));
+	}
+	void checkEventDroped(void* arg,int k,void*v){
+		sendEventDroped(eventGet((long)v));
+	}
+	bintree* sent;
+	int checkEvent(void * n_n,event* e){
+		worklist* w=n_n;
+		player_info * pl=w->data;
+		bintreeDel(sent,e->id,0);
+		//TODO: add check for dependences
+		//if need to send number of rooms need to add check(||) for timestamp
+		if (bintreeGet(&pl->events.sent, e->id)==0){
+			if (bintreeGet(&pl->events.done, e->id)==0)
+				bintreeAdd(&pl->events.available, e->id, (void*)(long)e->id);
+			//add another checks
+		}//TODO: how to send data about remove
+		return 0;
+	}
+	/*
+		events can be added: 
+			after events update
+			after map done
+	*/
+	//check for new events
+	if (config.events.timestamp>pl->events.timestamp ||
+			checkMask(pl->bitmask,BM_PLAYER_CONNECTED)){
+		//create copy of sent events
+		sent=bintreeClone(&pl->events.sent);
+		//add events to available;
+		eventForEach(w, checkEvent);
+		//drop remained events
+		void checkDrop(void* arg,int k,void*v){
+			bintreeAdd(arg,k,v);
+		}
+		bintreeForEach(sent,&pl->events.droped,checkDrop);
+		//clean end free bintree 
+		bintreeErase(sent,0);
+		free(sent);
+		pl->events.timestamp=_timestamp;
+	}
+	//send info about available events
+	bintreeForEach(&pl->events.available,0,checkEventAvailable);
+	//send info about dropped events
+	bintreeForEach(&pl->events.droped,0,checkEventDroped);
+	
+	return 0;
+}
+
+static int checkPlayerRoom(worklist * w,int _timestamp){
 	player_info * pl=w->data;
 	room * r_r;
 	char mes;
 //	printf("player %d room_id %d\n",pl->id,pl->room.id);
-		//check player data
+		//check room data
 	if (pl->room.id!=0){
 		t_semop(t_sem.room,&sem[0],1);
 		r_r=roomGet(pl->room.type,pl->room.id);
@@ -242,10 +293,13 @@ static int checkPlayerData(worklist* w,int _timestamp){
 			setMask(pl->bitmask,BM_PLAYER_ROOM);
 		}
 	}
-		//
-//	}
-	//check events
-	eventForEach(w, checkEvent);
+	return 0;
+}
+
+static int checkPlayerData(worklist* w,int _timestamp){
+	player_info * pl=w->data;
+	checkPlayerRoom(w,_timestamp);
+	checkPlayerEvents(w,_timestamp);
 	//other places
 	pl->timestamp=_timestamp;
 	return 0;

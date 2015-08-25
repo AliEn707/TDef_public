@@ -14,7 +14,14 @@
 ╚══════════════════════════════════════════════════════════════╝
 */
 
-
+static int reverseInt(int x){
+	int o;
+	while (x){
+		o=(o<<1)+(x&1);
+		x>>=1;
+	}
+	return o;
+}
 
 int bintreeAdd(bintree* root,int key,void* data){
 	bintree* tmp=root;
@@ -121,17 +128,84 @@ void bintreeErase(bintree * root,void (f)(void*v)){
 	root->next[1]=0;
 }
 
+static void _bintreeForEach(bintree * root,void* arg, int key, void(f)(void* arg,int k,void*v)){
+	if (root==0)
+		return;
+	int i;
+	for(i=0;i<2;i++)
+		_bintreeForEach(root->next[i],arg,(key<<1)+i,f);
+	if (root->data!=0)
+		f(arg,reverseInt(key)>>1,root->data);
+}
+
+void bintreeForEach(bintree * root,void* arg,void(f)(void* arg,int k,void*v)){
+	if (root==0)
+		return;
+	_bintreeForEach(root,arg,1,f);
+}
+
+int bintreeSize(bintree * root){
+	int i=0;
+	void add(void* arg,int k,void*v){
+		i++;
+	}
+	bintreeForEach(root,0,add);
+	return i;
+}
+
+//get all values as array
+void* bintreeToArray(bintree * root){
+	void** o;
+	int i=bintreeSize(root);
+	void add(void* arg,int k,void*v){
+		o[i]=v;
+		i++;
+	}
+	if ((o=malloc(sizeof(*o)*i))==0)
+		return 0;
+	i=0;
+	bintreeForEach(root,0,add);
+	return o;
+}
+
+//get clone of bintree
+bintree* bintreeClone(bintree * root){
+	bintree* o;
+	void add(void* arg,int k,void*v){
+		bintreeAdd(o,k,v);
+	}
+	if ((o=malloc(sizeof(*o)))==0)
+		return 0;
+	memset(o,0,sizeof(*o));
+	bintreeForEach(root,0,add);
+	return o;
+}
+
 /*
+void show(void* a, int k, void* v){
+	printf("%d %d\n",k,v);
+}
+
 int main(){
 	bintree r;
+	bintree * z;
 	memset(&r,0,sizeof(r));
-	bintreeAdd(&r,3,100);
-	bintreeAdd(&r,7,132);
-	printDebug("%d\n",bintreeGet(&r,3));
-	bintreeDel(&r,3);
+	
+	printf("%u\n",reverseInt(11));
+	
+	bintreeAdd(&r,3,(void*)100);
+	bintreeAdd(&r,6,(void*)143);
+	bintreeAdd(&r,7,(void*)132);
+	printf("%d\n",bintreeGet(&r,3));
+	bintreeForEach(&r,0,show);
+	printf("\t %d\n", bintreeSize(&r));
+	free(bintreeToArray(&r));
+
+	bintreeDel(&r,3,0);
+	printf("\t %d\n", bintreeSize(&r));
 //	bintreeDel(&r,3);
-	printDebug("%d\n",bintreeGet(&r,3));
-	printDebug("%d\n",bintreeGet(&r,7));
-	bintreeErase(&r);
+	printf("%d\n",bintreeGet(&r,3));
+	printf("%d\n",bintreeGet(&r,7));
+	bintreeErase(&r,0);
 }
 */
