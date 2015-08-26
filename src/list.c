@@ -45,6 +45,14 @@ void worklistErase(worklist* root){
 	root->next=0;
 }
 
+void worklistForEach(worklist* root, void*(f)(worklist* w)){
+	worklist * tmp=root;
+	for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
+		if (f(tmp)!=0)
+			tmp=worklistDel(root,tmp->id);
+	}
+}
+
 /*
 int main(){
 	worklist l;
