@@ -260,7 +260,9 @@ static int checkPlayerRoom(worklist * w,int _timestamp){
 //			printf("check room ts %d %d\n",pl->timestamp,r_r->timestamp);
 			if (pl->timestamp<=r_r->timestamp){
 				if (r_r->status==ROOM_RUN){
-					if (pl->room.timestamp!=r_r->timestamp){
+//					printf("check room timestamp\n");
+					if (pl->room.timestamp!=r_r->timestamp){//TODO: check why 
+						printf("send room ready\n");
 						//send player to connect
 						mes=MESSAGE_GAME_START;
 						//send mes game start
@@ -296,12 +298,18 @@ static int checkPlayerRoom(worklist * w,int _timestamp){
 	return 0;
 }
 
-static int checkPlayerData(worklist* w,int _timestamp){
+static inline int checkPlayerData(worklist* w,int _timestamp){
 	player_info * pl=w->data;
 	checkPlayerRoom(w,_timestamp);
 	checkPlayerEvents(w,_timestamp);
 	//other places
 	pl->timestamp=_timestamp;
+	return 0;
+}
+
+static inline int sendBeep(worklist* w){
+	char mes=0;
+	sendData(w->sock,&mes,sizeof(mes));
 	return 0;
 }
 
@@ -363,6 +371,7 @@ void * threadWorker(void * arg){
 				}
 				//check changes of player
 				checkPlayerData(tmp,_timestamp);
+				sendBeep(tmp);
 				//send data to player if need
 				if (sendPlayerData(tmp)!=0){
 //					printf("cant send\n");

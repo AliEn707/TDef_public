@@ -16,7 +16,7 @@ static int connSendRecv(char * hostname,int port, int token){
 	int sockfd,n;
 	struct sockaddr_in servaddr;
 	struct hostent *server;
-	char mes_;
+	int mes_; //port
 	char type='c'; //'c' for get new room
 	if (hostname==0)
 		return -1;
@@ -46,17 +46,18 @@ static int connSendRecv(char * hostname,int port, int token){
 	sendData(sockfd,&type,sizeof(type));
 //	printf("send token %d \n",message->token);
 	sendData(sockfd,&token,sizeof(token));
-		
-	n=recv(sockfd,&mes_,sizeof(mes_),0);
-	printf("get answer %d\n",n);
-	if (n<0)
-		return 0;
-	else
-		if (n>0){
-			close(sockfd);
-			return n;
-		}
-	return 0;
+	
+	recv(sockfd,&mes_,sizeof(mes_),0);
+	printf("port %d\n",mes_);
+	char o;
+	n=recv(sockfd,&o,sizeof(o),0);
+	printf("get answer [%d] %d\n",n,o);
+	
+	if (n>0){
+		close(sockfd);
+		return -1;
+	}
+	return mes_;
 }
 
 
@@ -82,27 +83,28 @@ static int checkRoomStatus(room * r){
 			for(i=1;i<=*$_$;i++)
 				if ((_$_=connSendRecv(serverGetById($_$[i]),
 							serversGetPortById($_$[i]),
-							r->token))<=0){//we do not get answer, all ok
+							r->token))>0){//we get port
 					//printf("_$_= %d\n",_$_);
 					if (_$_<0){//cant connect
 						serversSetFail($_$[i]);
 					}else{//all ok
-						r->status=ROOM_WAIT;
+						r->status=ROOM_RUN;
 						r->server=$_$[i];
+						r->port=_$_;
+						r->timestamp=time(0);
 						return 0;
 					}
 				}
 			//we get answer from all servers, cant create room
 			printf("cant get room\n");
 			r->status=ROOM_FAIL;
-			r->timestamp=time(0);
 			return 0;
 		}
 	}
 	if (r->status==ROOM_ERROR){
 		//ask for room
 	}
-/*	if (r->status==ROOM_FAIL){
+	if (r->status==ROOM_FAIL){
 		//room is free
 		//if (r->users==0){
 		room* _r;
@@ -117,7 +119,7 @@ static int checkRoomStatus(room * r){
 		t_semop(t_sem.room,&sem[1],1);
 		//}
 	}
-*/	return 0;
+	return 0;
 }
 
 static inline int proceedServerMessage(worklist* w,char msg_type){
