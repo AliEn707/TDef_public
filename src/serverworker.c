@@ -88,10 +88,8 @@ static int checkRoomStatus(room * r){
 					if (_$_<0){//cant connect
 						serversSetFail($_$[i]);
 					}else{//all ok
-						r->status=ROOM_RUN;
+						r->status=ROOM_WAIT;
 						r->server=$_$[i];
-						r->port=_$_;
-						r->timestamp=time(0);
 						return 0;
 					}
 				}
@@ -161,13 +159,11 @@ static inline int proceedServerMessage(worklist* w,char msg_type){
 				l_l=strlen(e_e->map);
 				sendData(w->sock,&l_l,sizeof(l_l));
 				sendData(w->sock,e_e->map,l_l);
-			}else
-				close(w->sock);
+			}
 			r_r->timestamp=time(0);
-		}else
-			close(w->sock);
+		}
 		t_semop(t_sem.room,&sem[1],1);
-		return 0;
+		return 1;
 	}
 	if (msg_type==MESSAGE_ROOM_RESULT){ //packet [mes(char)token(int)playertoken(int) ..
 		printf("get room result\n");
@@ -236,7 +232,7 @@ void * threadServerWorker(void * arg){
 			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
 				//get data from server about players and statistics
 				if (recvServerData(tmp)!=0){
-					printf("del serv from list\n");
+					printf("del serv from list\n"); //TODO: check why drops here
 					//close socket
 					close(tmp->sock);
 					//delete client

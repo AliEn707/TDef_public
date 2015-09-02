@@ -154,7 +154,7 @@ struct {
 	}*/
 	
 	room* roomGetByToken(int t){//TODO: FIX
-		cout<<"token"<< t << "\n";
+		cout<<"token "<< t << "\n";
 		for (it_big i = rooms_map.begin(); i != rooms_map.end(); i++)
 			for (it j = rooms_map[i->first].begin(); j != rooms_map[i->first].end(); j++)
 				if (((room*)j->second)->token == t)
