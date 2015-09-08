@@ -140,6 +140,11 @@ int dbSelectField(char* table, char* field){
 	return pgExec(str);
 }
 
+int dbSelectFieldWhere(char* table, char* sel, char* field, char* cmp, char* value){
+	sprintf(str,"SELECT %s FROM %s WHERE (%s %s %s);", sel, table, field, cmp, value);
+	return pgExec(str);
+}
+
 int dbSelectNewer(char* table, int timestamp){
 	sprintf(str,"SELECT * FROM %s WHERE updated_at > '%s';", table, dbTime(timestamp));
 	return pgExec(str);

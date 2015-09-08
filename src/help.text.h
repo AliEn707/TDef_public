@@ -7,6 +7,7 @@ Usage:\n\
  -d - for daemonize\n\
  -p path - for set pid file (only works with daemonize)\n\
  -l path - for set log file\n\
+ -v - for build info\n\
  -h - for this message\n\
 you cant combine keys\n\
 "

@@ -59,6 +59,10 @@ int parseArgv(int argc,char * argv[]){
 			config.log_file = argv[i];
 			continue;
 		}
+		if (strcmp(argv[i],"-v")==0){
+			printf("Built at %s %s\n", __DATE__,__TIME__);
+			exit(0);
+		}
 	}
 	return ret;
 }
@@ -107,6 +111,9 @@ int core(){
 }
 
 int main(int argc, char* argv[]){
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__//__ORDER_LITTLE_ENDIAN__ 
+	printf("Big endian version not implement yet\n");
+#else
 	memset(&config,0,sizeof(config));
 	//set defaults
 	config.workers_num=WORKER_NUM;
@@ -119,5 +126,6 @@ int main(int argc, char* argv[]){
 		core();
 	else
 		daemonize(config.pid_file,core);
+#endif
 	return 0;
 }

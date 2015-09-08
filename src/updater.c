@@ -22,7 +22,7 @@ static inline int proceedUpdaterMessage(worklist* w,char msg_type){
 	int timestamp;
 	if (msg_type==MESSAGE_UPDATE_MAPS){
 		t_semop(t_sem.db,&sem[0],1);
-			dbSelectField("tdef_maps","name");
+			dbSelectFieldWhere("tdef_maps","name","completed","=","'t'");
 			int name=pgNumber("name");
 			rows=pgRows();
 			map_names=malloc(rows*sizeof(*map_names));
@@ -75,7 +75,7 @@ static inline int proceedUpdaterMessage(worklist* w,char msg_type){
 		t_semop(t_sem.db,&sem[1],1);
 		if (rows!=0){
 			t_semop(t_sem.db,&sem[0],1);
-				dbSelectNewer(TYPES[(int)msg_type], timestamp);
+				dbSelect(TYPES[(int)msg_type]);
 				rows=pgRows();
 				int params=pgNumber("params");
 				int id=pgNumber("id");
