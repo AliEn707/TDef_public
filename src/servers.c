@@ -1,33 +1,63 @@
 #include "headers.h"
 
-#define MAX_SERVERS 40
+#define MAX_SERVERS 80
 
 typedef char hostname[25];
 
-static 
+typedef
 struct {
+	int id;
 	hostname hostname;
 	int port;
 	short status;
-} servers[MAX_SERVERS];
+} server;
+
+static bintree servers; 
 
 static int _servers;
 
 int serversLoad(){
+	server * s;
 	FILE* file;
 	if ((file=fopen("servers.ini","r"))==0){
 		perror("fopen servers.ini");
 		return 0;
 	}
-	memset(servers,0,sizeof(servers));
 	_servers=0;
 	while(!feof(file)){
-		fscanf(file,"%s %d",_servers[servers].hostname,&servers[_servers].port);
-		servers[_servers].status=1;
+		int id=_servers+1;
+		s=bintreeGet(&servers,id);
+		if (s==0){
+			s=malloc(sizeof(*s));
+			s->id=id;
+			bintreeAdd(&servers,id,s);
+		}
+		fscanf(file,"%s %d",s->hostname,&s->port);
+		s->status=1;
 		_servers++;
+		if (_servers==MAX_SERVERS)
+			break;
 	}
 	
 	fclose(file);
+/*
+	int i;
+	t_semop(t_sem.db,&sem[0],1);
+		dbSelect("tdef_map_servers");
+		_servers=pgRows();
+		for(i=0;i<_servers;i++){
+			char * value;
+			value=pgValue(i,pgNumber("id"));
+			int id=atoi(value);
+			s=bintreeFetch(&servers,id,sizeof(*s));
+			value=pgValue(i,pgNumber("hostname"));
+			sprintf(s->hostname,"%s",value);
+			value=pgValue(i,pgNumber("port"));
+			s->port=atoi(value);
+			s->id=id;
+		}
+	t_semop(t_sem.db,&sem[1],1);
+*/	
 	printf("Servers updated\n");
 	return _servers;	
 }
@@ -38,27 +68,39 @@ int serversGetNum(){
 
 int * serversGetSort(){
 	static int s_s[MAX_SERVERS+1];
-	int i,j=0;
-	for (i=0;i<serversGetNum();i++)
-		if (servers[i].status>0)
-			s_s[j++]=i;
+	int j=0;
+	void addServ(void* arg,int id,void*v){
+		server * s=v;
+		if (s->status>0)
+			s_s[j++]=s->id;
+	}
+	bintreeForEach(&servers,0,addServ);
 	*s_s=j;
 	return s_s;
 }
 
 void serversSetFail(int id){
-	servers[id].status=-1;
+	server * s=bintreeGet(&servers,id);
+	if (s!=0)
+		s->status=-1;
 }
 
 char * serverGetById(int id){
-	if (servers[id].status>0)
-		return servers[id].hostname;
+	server * s=bintreeGet(&servers,id);
+	if (s!=0)
+		return s->hostname;
 	return 0;
 }
 
 int serversGetPortById(int id){
-	return servers[id].port;
+	server * s=bintreeGet(&servers,id);
+	if (s!=0)
+		return s->port;
+	return 0;
 }
 
+void serversClean(){
+	bintreeErase(&servers,free);
+}
 
 

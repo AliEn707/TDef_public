@@ -9,3 +9,5 @@ int * serversGetSort();
 void serversSetFail(int id);
 
 int serversLoad();
+
+void serversClean();
