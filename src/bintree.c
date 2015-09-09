@@ -63,7 +63,7 @@ void * bintreeFetch(bintree* root,int key,int size){
 	void * a=bintreeGet(root,key);
 	if (a==0){
 		a=malloc(size);
-		bintreeAdd(root,id,a);
+		bintreeAdd(root,key,a);
 	}
 	return a;
 }
