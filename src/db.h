@@ -9,7 +9,8 @@ int dbFillServers();
 
 int dbFillEvents();
 
-char* dbTime(int t);
+char* dbTime(time_t t);
+time_t dbRawTime(char* t);
 
 #define dbError() pgError()
 
@@ -19,5 +20,5 @@ int dbSelectWhere(char* table, char* field, char* cmp, char* value);
 int dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, int timestamp);
 int dbSelectField(char* table, char* field);
 int dbSelectFieldWhere(char* table, char* sel, char* field, char* cmp, char* value);
-int dbSelectNewer(char* table, int timestamp);
-int dbSelectFieldNewer(char* table,char* field, int timestamp);
+int dbSelectNewer(char* table, time_t timestamp);
+int dbSelectFieldNewer(char* table,char* field, time_t timestamp);

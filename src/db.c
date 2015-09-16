@@ -110,10 +110,33 @@ int dbFillEvents(){
 	config.events.timestamp=time(0);
 	return 0;
 }
-
-char* dbTime(int t){
+/*
+dbtime 2015-08-07 10:01:42.565979
+linux time Wed Sep 16 08:31:56 2015
+*/
+char* dbTime(time_t t){
 	time_t _t=t;
+//	char s[20]; 
+//	strftime(s, 20, "%F %H:%M:%S", gmtime(&_t));
 	return asctime(gmtime(&_t));
+}
+
+time_t dbRawTime(char* s){
+	struct tm t;
+	time_t ret;
+	int error=sscanf(s,"%d-%d-%d %d:%d:%d.%d",&t.tm_year,&t.tm_mon,&t.tm_mday,&t.tm_hour,&t.tm_min,&t.tm_sec,&error);
+	t.tm_mon-=1;
+	t.tm_year-=1900;
+	char *tz= getenv("TZ");
+	setenv("TZ", "", 1);
+	tzset();
+	ret = mktime(&t);
+	if (tz)
+		setenv("TZ", tz, 1);
+	else
+		unsetenv("TZ");
+	tzset();
+	return ret;
 }
 
 ///database selects 
@@ -145,12 +168,12 @@ int dbSelectFieldWhere(char* table, char* sel, char* field, char* cmp, char* val
 	return pgExec(str);
 }
 
-int dbSelectNewer(char* table, int timestamp){
+int dbSelectNewer(char* table, time_t timestamp){
 	sprintf(str,"SELECT * FROM %s WHERE updated_at > '%s';", table, dbTime(timestamp));
 	return pgExec(str);
 }
 
-int dbSelectFieldNewer(char* table,char* field, int timestamp){
+int dbSelectFieldNewer(char* table,char* field, time_t timestamp){
 	sprintf(str,"SELECT %s FROM %s WHERE updated_at > '%s';", field, table, dbTime(timestamp));
 	return pgExec(str);
 }
