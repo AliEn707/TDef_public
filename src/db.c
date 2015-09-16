@@ -81,6 +81,9 @@ player_info * dbAuth(worklist * client){
 	//send client id
 	if (send(client->sock,&client->id,sizeof(client->id),MSG_NOSIGNAL)<=0)
 		return 0;
+	double timestamp=time(0);//ActionScript doesn't have int64... used double instead
+	if (send(client->sock,&timestamp,sizeof(timestamp),MSG_NOSIGNAL)<=0)
+		return 0;
 	return pl;
 }
 
