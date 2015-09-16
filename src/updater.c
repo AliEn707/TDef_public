@@ -19,7 +19,7 @@ static inline int proceedUpdaterMessage(worklist* w,char msg_type){
 	int len;
 	char* value;
 	int rows;
-	int timestamp;
+	long long int timestamp;
 	if (msg_type==MESSAGE_UPDATE_MAPS){
 		t_semop(t_sem.db,&sem[0],1);
 			dbSelectFieldWhere("tdef_maps","name","completed","=","'t'");
