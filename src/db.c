@@ -150,6 +150,11 @@ int dbSelect(char* table){
 	return pgExec(str);
 }
 
+int dbSelectWhereUni(char* table, char* fields, char* cmp){
+	sprintf(str,"SELECT %s FROM %s where (%s);", fields, table, cmp);
+	return pgExec(str);
+}
+
 int dbSelectWhere(char* table, char* field, char* cmp, char* value){
 	sprintf(str,"SELECT * FROM %s WHERE (%s %s %s);", table, field, cmp, value);
 	return pgExec(str);
@@ -179,5 +184,35 @@ int dbSelectNewer(char* table, time_t timestamp){
 int dbSelectFieldNewer(char* table,char* field, time_t timestamp){
 	sprintf(str,"SELECT %s FROM %s WHERE updated_at > '%s';", field, table, dbTime(timestamp));
 	return pgExec(str);
+}
+
+//inserting
+int dbInsert(char* table, char * fields, char * values){
+	sprintf(str,"INSERT INTO %s ( %s ) VALUES ( %s );", table, fields, values);
+	return pgExec(str);	
+}
+
+static struct {
+	char table[50];
+	char values[1000];
+	char tmp[1000];
+} Updating;
+
+//updating
+int dbUpdateStart(char* table){
+	sprintf(Updating.table,"%s", table);
+	Updating.values[0]=0;
+	return 0;	
+}
+
+int dbUpdateValue(char *field, char *value){
+	sprintf(Updating.tmp,"%s%s %s = %s",Updating.values, Updating.values[0]!=0? "," : "",field,value);
+	sprintf(Updating.values,"%s", Updating.tmp);
+	return 0;	
+}
+
+int dbUpdateEnd(char* cmp){
+	sprintf(str,"UPDATE %s SET  %s  WHERE %s;", Updating.table, Updating.values, cmp);
+	return pgExec(str);	
 }
 

@@ -16,9 +16,16 @@ time_t dbRawTime(char* t);
 
 //selects
 int dbSelect(char* table);
+int dbSelectWhereUni(char* table, char* fields, char* cmp);
 int dbSelectWhere(char* table, char* field, char* cmp, char* value);
 int dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, int timestamp);
 int dbSelectField(char* table, char* field);
 int dbSelectFieldWhere(char* table, char* sel, char* field, char* cmp, char* value);
 int dbSelectNewer(char* table, time_t timestamp);
 int dbSelectFieldNewer(char* table,char* field, time_t timestamp);
+
+int dbInsert(char* table, char * fields, char * values);
+
+int dbUpdateStart(char* table);
+int dbUpdateValue(char *field, char *value);
+int dbUpdateEnd(char *cmp);
