@@ -29,4 +29,4 @@ int dbInsert(char* table, char * fields, char * values);
 
 int dbUpdateStart(char* table);
 int dbUpdateValue(char *field, char *value);
-int dbUpdateEnd(char *cmp);
+int dbUpdateEnd(char *cmp, int touch);

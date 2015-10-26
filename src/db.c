@@ -115,6 +115,10 @@ int dbGetPlayer(player_info * pl, char * n, int t){
 			if (t==atoi(pgValue(0,data))){
 				data=pgNumber("player_id");
 				pl->id=atoi(pgValue(0,data));
+				dbUpdateStart("tdef_player_auths");
+				dbUpdateValue("token","NULL");
+				sprintf(cmp,"(player_id = %d)", pl->id);
+				dbUpdateEnd(cmp, 1);
 				//add another values
 			}
 		}
@@ -147,9 +151,10 @@ linux time Wed Sep 16 08:31:56 2015
 */
 char* dbTime(time_t t){
 	time_t _t=t;
-//	char s[20]; 
+	static char s[30]; 
 //	strftime(s, 20, "%F %H:%M:%S", gmtime(&_t));
-	return asctime(gmtime(&_t));
+	sprintf(s,"'%s'",asctime(gmtime(&_t)));
+	return s;
 }
 
 time_t dbRawTime(char* s){
@@ -190,7 +195,7 @@ int dbSelectWhere(char* table, char* field, char* cmp, char* value){
 
 int dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, int timestamp){
 //	printf("SELECT * FROM %s WHERE (%s %s %s and updated_at > '%s');\n", table, field,cmp,value, dbTime(timestamp)); //can be used for logging
-	sprintf(str,"SELECT * FROM %s WHERE (%s %s %s and updated_at > '%s');", table, field,cmp,value, dbTime(timestamp));
+	sprintf(str,"SELECT * FROM %s WHERE (%s %s %s and updated_at > %s);", table, field,cmp,value, dbTime(timestamp));
 	return pgExec(str);
 }
 
@@ -205,17 +210,17 @@ int dbSelectFieldWhere(char* table, char* sel, char* field, char* cmp, char* val
 }
 
 int dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, int timestamp){
-	sprintf(str,"SELECT %s FROM %s WHERE (%s %s %s and updated_at > '%s');", sel, table, field, cmp, value, dbTime(timestamp));
+	sprintf(str,"SELECT %s FROM %s WHERE (%s %s %s and updated_at > %s);", sel, table, field, cmp, value, dbTime(timestamp));
 	return pgExec(str);
 }
 
 int dbSelectNewer(char* table, time_t timestamp){
-	sprintf(str,"SELECT * FROM %s WHERE updated_at > '%s';", table, dbTime(timestamp));
+	sprintf(str,"SELECT * FROM %s WHERE updated_at > %s;", table, dbTime(timestamp));
 	return pgExec(str);
 }
 
 int dbSelectFieldNewer(char* table,char* field, time_t timestamp){
-	sprintf(str,"SELECT %s FROM %s WHERE updated_at > '%s';", field, table, dbTime(timestamp));
+	sprintf(str,"SELECT %s FROM %s WHERE updated_at > %s;", field, table, dbTime(timestamp));
 	return pgExec(str);
 }
 
@@ -244,7 +249,9 @@ int dbUpdateValue(char *field, char *value){
 	return 0;	
 }
 
-int dbUpdateEnd(char* cmp){
+int dbUpdateEnd(char* cmp, int touch){
+	if (touch)
+		dbUpdateValue("updated_at",dbTime(time(0)));
 	sprintf(str,"UPDATE %s SET  %s  WHERE %s;", Updating.table, Updating.values, cmp);
 	return pgExec(str);	
 }
