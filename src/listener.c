@@ -95,19 +95,29 @@ void * threadListener(void * arg){
 					_sendData(sock,PRIVATE_POLICY,sizeof(PRIVATE_POLICY));
 					close(sock);
 				}else{
-					printf("player connected: %s\n",t_t);
-	//				printf("semval= %d\n",t_semctl(config.watcher.sem,1,GETVAL));
-					t_semop(t_sem.watcher,&sem[0],1);
-						config.watcher.client_num++;
-						//add client to watcher
-						if ((tmp=worklistAdd(&config.watcher.client,0))==0){
-							perror("worklistAdd Listener");
+					do{
+						printf("player connected: %s\n",t_t);
+						if (strcmp(t_t, "FlashHello^_^")==0){
+							printf("connect using Flash\n");
+						}else if (strcmp(t_t, "JavaApplet^_^")==0){
+							printf("connect using Java\n");
+						}else{
 							close(sock);
-						} else {
-							tmp->sock=sock;
-	//						printf("added to watcher\n");
+							break;
 						}
-					t_semop(t_sem.watcher,&sem[1],1);
+		//				printf("semval= %d\n",t_semctl(config.watcher.sem,1,GETVAL));
+						t_semop(t_sem.watcher,&sem[0],1);
+							config.watcher.client_num++;
+							//add client to watcher
+							if ((tmp=worklistAdd(&config.watcher.client,0))==0){
+								perror("worklistAdd Listener");
+								close(sock);
+							} else {
+								tmp->sock=sock;
+		//						printf("added to watcher\n");
+							}
+						t_semop(t_sem.watcher,&sem[1],1);
+					}while(0);
 					sleep(0);
 				}
 			}
