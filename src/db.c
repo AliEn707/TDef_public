@@ -59,12 +59,14 @@ player_info * dbAuth(worklist * client){
 		return 0;
 	printf("got size of name %d\n",$name);
 	if ($name!=0){
-		if (recvData(client->sock,name,$name)<=0) //change to anblock try to get
+		if (recvData(client->sock,name,$name)<=0) 
 			return 0;
 		printf("got name %s\n",name);
 		if (recvData(client->sock,&token,sizeof(token))<=0)
 			return 0;
 		printf("got token %d\n",token);
+		//check token
+		//dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, int timestamp){
 	}else {
 		//something strange
 		//set first char of name to 0 if error 
@@ -72,12 +74,12 @@ player_info * dbAuth(worklist * client){
 	}
 	//check auth
 	//& get data from db
-	if (dbGetPlayer(pl, name)!=0){
-		close(client->sock);
-		client->id=delPlayerId(client->id);
+	if (dbGetPlayer(pl, name, token)!=0){
 		return 0;
 	}
 	client->id=pl->id;
+	if (pl->id==0)
+		return 0;
 	//send client id
 	if (send(client->sock,&client->id,sizeof(client->id),MSG_NOSIGNAL)<=0)
 		return 0;
@@ -87,11 +89,37 @@ player_info * dbAuth(worklist * client){
 	return pl;
 }
 
-int dbGetPlayer(player_info * pl, char * name){
-	if (name==0)
+int dbGetPlayer(player_info * pl, char * n, int t){
+	if (n==0)
 		return -1;
 	//get and set player data
-	pl->id=rand();
+	
+	//add check players from wacher list
+	
+	//dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, int timestamp)
+	char name[20];
+	int user_id;
+	sprintf(name,"'%s'",n);
+	t_semop(t_sem.db,&sem[0],1);
+	dbSelectFieldWhere("users", "id", "email", "=", name);
+	if (pgRows()>0){
+		int data=pgNumber("id");
+		user_id=atoi(pgValue(0,data));
+		//select au.* from tdef_player_auths au where ( player_id in (select id from tdef_players pl where user_id = id) ); 
+		//dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, int timestamp)
+		char cmp[50];
+		sprintf(cmp,"player_id in (select id from tdef_players where user_id = %d)", user_id);
+		dbSelectFieldWhereNewer("tdef_player_auths au", "au.*", "", cmp, "", time(0)-5);
+		if (pgRows()>0){
+			data=pgNumber("token");
+			if (t==atoi(pgValue(0,data))){
+				data=pgNumber("player_id");
+				pl->id=atoi(pgValue(0,data));
+				//add another values
+			}
+		}
+	}
+	t_semop(t_sem.db,&sem[1],1);
 	return 0;
 }
 
@@ -173,6 +201,11 @@ int dbSelectField(char* table, char* field){
 
 int dbSelectFieldWhere(char* table, char* sel, char* field, char* cmp, char* value){
 	sprintf(str,"SELECT %s FROM %s WHERE (%s %s %s);", sel, table, field, cmp, value);
+	return pgExec(str);
+}
+
+int dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, int timestamp){
+	sprintf(str,"SELECT %s FROM %s WHERE (%s %s %s and updated_at > '%s');", sel, table, field, cmp, value, dbTime(timestamp));
 	return pgExec(str);
 }
 
