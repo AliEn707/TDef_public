@@ -224,35 +224,80 @@ int dbSelectFieldNewer(char* table,char* field, time_t timestamp){
 	return pgExec(str);
 }
 
-//inserting
-int dbInsert(char* table, char * fields, char * values){
-	sprintf(str,"INSERT INTO %s ( %s ) VALUES ( %s );", table, fields, values);
-	return pgExec(str);	
-}
-
 static struct {
 	char table[50];
-	char values[1000];
-	char tmp[1000];
-} Updating;
+	char values[2000];
+	char tmp[2000];
+} qeueing;
 
 //updating
 int dbUpdateStart(char* table){
-	sprintf(Updating.table,"%s", table);
-	Updating.values[0]=0;
+	sprintf(qeueing.table,"%s", table);
+	qeueing.values[0]=0;
 	return 0;	
 }
 
 int dbUpdateValue(char *field, char *value){
-	sprintf(Updating.tmp,"%s%s %s = %s",Updating.values, Updating.values[0]!=0? "," : "",field,value);
-	sprintf(Updating.values,"%s", Updating.tmp);
+	sprintf(qeueing.tmp,"%s%s %s = %s",qeueing.values, qeueing.values[0]!=0? "," : "",field,value);
+	sprintf(qeueing.values,"%s", qeueing.tmp);
 	return 0;	
 }
 
 int dbUpdateEnd(char* cmp, int touch){
 	if (touch)
-		dbUpdateValue("updated_at",dbTime(time(0)));
-	sprintf(str,"UPDATE %s SET  %s  WHERE %s;", Updating.table, Updating.values, cmp);
+		dbUpdateValue("updated_at", dbTime(time(0)));
+	sprintf(str,"UPDATE %s SET  %s  WHERE %s;", qeueing.table, qeueing.values, cmp);
 	return pgExec(str);	
+}
+
+//inserting
+//one line inserting
+int dbInsert(char* table, char * f, char * v){
+	static char fields[200], values[200];
+	sprintf(fields,"%s, created_at, updated_at", f);
+	sprintf(values,"%s, %s, %s", v, dbTime(time(0)), dbTime(time(0)));
+	sprintf(str,"INSERT INTO %s ( %s ) VALUES ( %s );", table, fields, values);
+	return pgExec(str);	
+}
+
+//inserting for more complex data
+int dbInsertStart(char* table){
+	sprintf(qeueing.table,"%s", table);
+	qeueing.values[0]=0;
+	qeueing.tmp[0]=0;
+	return 0;	
+}
+
+int dbInsertValue(char *field, char *value){
+	static char tmp[200];
+	sprintf(tmp,"%s%s %s",qeueing.tmp, qeueing.tmp[0]!=0? "," : "",field);
+	sprintf(qeueing.tmp,"%s", tmp);
+	sprintf(tmp,"%s%s %s",qeueing.values, qeueing.values[0]!=0? "," : "",value);
+	sprintf(qeueing.values,"%s", tmp);
+	return 0;	
+}
+
+int dbInsertEnd(){
+	dbInsertValue("created_at", dbTime(time(0)));
+	dbInsertValue("updated_at", dbTime(time(0)));
+	sprintf(str,"INSERT INTO %s ( %s ) VALUES ( %s );", qeueing.table, qeueing.tmp, qeueing.values);
+	return pgExec(str);	
+}
+
+
+int dbLog(int player_id, char *action, int object_id, char *object_type, int value, char* other){
+	static char tmp[50];
+	dbInsertStart("tdef_logs");
+	dbInsertValue("action", action);
+	sprintf(tmp,"%d", player_id);
+	dbInsertValue("player_id", tmp);
+	sprintf(tmp,"%d", object_id);
+	dbInsertValue("logable_id", tmp);
+	dbInsertValue("logable_type", object_type);
+	sprintf(tmp,"%d", value);
+	dbInsertValue("value", tmp);
+	dbInsertValue("other", other);
+	
+	return dbInsertEnd();	
 }
 

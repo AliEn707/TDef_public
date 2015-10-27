@@ -25,8 +25,16 @@ int dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char
 int dbSelectNewer(char* table, time_t timestamp);
 int dbSelectFieldNewer(char* table,char* field, time_t timestamp);
 
-int dbInsert(char* table, char * fields, char * values);
-
 int dbUpdateStart(char* table);
 int dbUpdateValue(char *field, char *value);
 int dbUpdateEnd(char *cmp, int touch);
+
+//one line insert
+int dbInsert(char* table, char * fields, char * values);
+//more lines insert
+int dbInsertStart(char* table);
+int dbInsertValue(char *field, char *value);
+int dbInsertEnd();
+
+//add log
+int dbLog(int player_id, char *action, int object_id, char *object_type, int value, char* other);
