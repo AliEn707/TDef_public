@@ -77,6 +77,12 @@ char* pgError(){
 	return PQerrorMessage(connection);
 }
 
+void pgErrorPrint(){
+	char * str=PQerrorMessage(connection);
+	if (str[0]!=0)
+		printf("%s\n", PQerrorMessage(connection)); //change to log print
+}
+
 int pgNumber(char * name){
 	if (connection==0)
 		return -1;

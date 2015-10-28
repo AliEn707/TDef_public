@@ -111,16 +111,25 @@ int dbGetPlayer(player_info * pl, char * n, int t){
 		sprintf(cmp,"player_id in (select id from tdef_players where user_id = %d)", user_id);
 		dbSelectFieldWhereNewer("tdef_player_auths au", "au.*", "", cmp, "", time(0)-5);
 		if (pgRows()>0){
+			int player_id;
+			data=pgNumber("player_id");
+			//set player id
+			player_id=atoi(pgValue(0,data));
 			data=pgNumber("token");
 			if (t==atoi(pgValue(0,data))){
-				data=pgNumber("player_id");
-				pl->id=atoi(pgValue(0,data));
+				//set player id
+				pl->id=player_id;
+				//remove auth entry
 				dbUpdateStart("tdef_player_auths");
 				dbUpdateValue("token","NULL");
 				sprintf(cmp,"(player_id = %d)", pl->id);
 				dbUpdateEnd(cmp, 1);
+				pgErrorPrint();
 				//add another values
 			}
+			//write to log
+			dbLog(player_id, "'login'", 0, "NULL", 0, (pl->id==0 ? "'login error'" : "'login success'") );
+			pgErrorPrint();
 		}
 	}
 	t_semop(t_sem.db,&sem[1],1);
@@ -289,9 +298,15 @@ int dbLog(int player_id, char *action, int object_id, char *object_type, int val
 	static char tmp[50];
 	dbInsertStart("tdef_logs");
 	dbInsertValue("action", action);
-	sprintf(tmp,"%d", player_id);
+	if (player_id)
+		sprintf(tmp,"%d", player_id);
+	else
+		sprintf(tmp,"NULL");
 	dbInsertValue("player_id", tmp);
-	sprintf(tmp,"%d", object_id);
+	if (object_id)
+		sprintf(tmp,"%d", object_id);
+	else
+		sprintf(tmp,"NULL");
 	dbInsertValue("logable_id", tmp);
 	dbInsertValue("logable_type", object_type);
 	sprintf(tmp,"%d", value);
