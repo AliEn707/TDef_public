@@ -348,44 +348,46 @@ static inline int sendPlayerData(worklist* w){
 
 void * threadWorker(void * arg){
 	int id=*(int*)arg;
-	worklist * tmp;
-	worklist * task=&config.worker[id].client;
-	t_sem_t worker_sem=t_sem.worker[id];
 	int TPS=10;  //ticks per sec
 	struct timeval tv={0,0};
+	int _timestamp;
+	long err;
+	
+	void* proceed(worklist* tmp, void* arg){
+		//some work
+		err=0;
+		//get data from player if any
+		if (recvPlayerData(tmp)!=0){
+//		printf("cant recv\n");
+			err++;
+		}
+		//check changes of player
+		checkPlayerData(tmp,_timestamp);
+		sendBeep(tmp);
+		//send data to player if need
+		if (sendPlayerData(tmp)!=0){
+//		printf("cant send\n");
+			err++;
+		}
+		if (err!=0){
+			printf("player %d lost connection\n", ((player_info*)(tmp->data))->id);
+			//set player lost connection
+			((player_info*)(tmp->data))->conn=FAIL;
+			config.worker[id].client_num--;
+		}
+		//if err!=0, tmp will be removed
+		return (void*)err;
+	}
+	
 	timePassed(&tv);
 	free(arg);
 	printf("Worker %d started\n",id);
-	short err;
 	while(config.run){
-		int _timestamp=time(0);
-		tmp=task;
-		t_semop(worker_sem,&sem[0],1);
-			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
-				//some work
-				err=0;
-				//get data from player if any
-				if (recvPlayerData(tmp)!=0){
-//					printf("cant recv\n");
-					err++;
-				}
-				//check changes of player
-				checkPlayerData(tmp,_timestamp);
-				sendBeep(tmp);
-				//send data to player if need
-				if (sendPlayerData(tmp)!=0){
-//					printf("cant send\n");
-					err++;
-				}
-				if (err!=0){
-//					printf("lost connection\n");
-					//set player lost connection
-					((player_info*)(tmp->data))->conn=FAIL;
-					tmp=worklistDel(task,tmp->id);
-					config.worker[id].client_num--;
-				}
-			}
-		t_semop(worker_sem,&sem[1],1);
+		_timestamp=time(0);
+		t_semop(t_sem.worker[id],&sem[0],1);
+			//do actions
+			worklistForEachRemove(&config.worker[id].client,proceed,0);
+		t_semop(t_sem.worker[id],&sem[1],1);
 		//some work
 		syncTPS(timePassed(&tv),TPS);
 	}

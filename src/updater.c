@@ -130,27 +130,30 @@ static inline int recvUpdaterData(worklist* w){
 }
 
 void * threadUpdater(void * arg){
-	worklist * tmp;
 	int TPS=4;  //ticks per sec
 	struct timeval tv={0,0};
+
+	void* proceed(worklist* tmp, void* arg){
+		//some work
+		//send message
+		if (recvUpdaterData(tmp)!=0){
+			printf("remove updater task\n");
+			//close socket
+			close(tmp->sock);
+			//delete client
+			return (void*)1;
+		}
+		return 0;
+	}
+
 	timePassed(&tv);
 	free(arg);
 	printf("Updater started\n");
 	while(config.run){
 		//check tasks
-		tmp=&config.updater.task;
 		t_semop(t_sem.updater,&sem[0],1);
-			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
-				//some work
-				//send message
-				if (recvUpdaterData(tmp)!=0){
-					printf("remove updater task\n");
-					//close socket
-					close(tmp->sock);
-					//delete client
-					tmp=worklistDel(&config.updater.task,tmp->id);
-				}
-			}
+			//do actions
+			worklistForEachRemove(&config.sheduller.task,proceed,0);
 		t_semop(t_sem.updater,&sem[1],1);
 		
 		syncTPS(timePassed(&tv),TPS);

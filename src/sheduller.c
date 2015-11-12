@@ -13,21 +13,23 @@
 
 void * threadSheduller(void * arg){
 	int id=*(int*)arg;
-	worklist * tmp;
 	int TPS=1;  //ticks per sec
 	struct timeval tv={0,0};
+	
+	void* proceed(worklist* tmp, void* arg){
+		//some work
+		//send message
+		return 0;
+	}
+		
 	timePassed(&tv);
 	free(arg);
 	printf("Sheduller %d started\n",id);
 	while(config.run){
 		//check tasks
-		tmp=&config.sheduller.task;
 		t_semop(t_sem.sheduller,&sem[0],1);
-			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
-				//some work
-				//send message
-				
-			}
+			//do actions
+			worklistForEachRemove(&config.sheduller.task,proceed,0);
 		t_semop(t_sem.sheduller,&sem[1],1);
 		
 //		while(getMsg(msg)>0){
