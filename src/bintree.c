@@ -138,61 +138,61 @@ void bintreeErase(bintree * root,void (f)(void*v)){
 	root->next[1]=0;
 }
 
-static void _bintreeForEach(bintree * root,void* arg, int key, void(f)(void* arg,int k,void*v)){
+static void _bintreeForEach(bintree * root, void(f)(int k, void *v, void *arg), void* arg, int key){
 	if (root==0)
 		return;
 	int i;
 	for(i=0;i<2;i++)
-		_bintreeForEach(root->next[i],arg,(key<<1)+i,f);
+		_bintreeForEach(root->next[i],f,arg,(key<<1)+i);
 	if (root->data!=0)
-		f(arg,reverseInt(key)>>1,root->data);
+		f(reverseInt(key)>>1,root->data, arg);
 }
 
-void bintreeForEach(bintree * root,void* arg,void(f)(void* arg,int k,void*v)){
+void bintreeForEach(bintree * root, void(f)(int k, void *v, void *arg), void *arg){
 	if (root==0)
 		return;
-	_bintreeForEach(root,arg,1,f);
+	_bintreeForEach(root,f,arg,1);
 }
 
 int bintreeSize(bintree * root){
 	int i=0;
-	void add(void* arg,int k,void*v){
+	void add(int k, void*v, void* arg){
 		i++;
 	}
-	bintreeForEach(root,0,add);
+	bintreeForEach(root,add, 0);
 	return i;
 }
 
 //get all values as array
-void* bintreeToArray(bintree * root){
+void** bintreeToArray(bintree * root){
 	void** o;
 	int i=bintreeSize(root);
-	void add(void* arg,int k,void*v){
+	void add(int k, void*v, void* arg){
 		o[i]=v;
 		i++;
 	}
 	if ((o=malloc(sizeof(*o)*i))==0)
 		return 0;
 	i=0;
-	bintreeForEach(root,0,add);
+	bintreeForEach(root, add, 0);
 	return o;
 }
 
 //get clone of bintree
 bintree* bintreeClone(bintree * root){
 	bintree* o;
-	void add(void* arg,int k,void*v){
+	void add(int k, void*v, void* arg){
 		bintreeAdd(o,k,v);
 	}
 	if ((o=malloc(sizeof(*o)))==0)
 		return 0;
 	memset(o,0,sizeof(*o));
-	bintreeForEach(root,0,add);
+	bintreeForEach(root,add,0);
 	return o;
 }
 
 /*
-void show(void* a, int k, void* v){
+void show(int k, void* v, void* a){
 	printf("%d %d\n",k,v);
 }
 
@@ -207,7 +207,7 @@ int main(){
 	bintreeAdd(&r,6,(void*)143);
 	bintreeAdd(&r,7,(void*)132);
 	printf("%d\n",bintreeGet(&r,3));
-	bintreeForEach(&r,0,show);
+	bintreeForEach(&r,show,0);
 	printf("\t %d\n", bintreeSize(&r));
 	free(bintreeToArray(&r));
 

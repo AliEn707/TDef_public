@@ -69,12 +69,12 @@ int serversGetNum(){
 int * serversGetSort(){
 	static int s_s[MAX_SERVERS+1];
 	int j=0;
-	void addServ(void* arg,int id,void*v){
+	void addServ(int id,void*v,void* arg){
 		server * s=v;
 		if (s->status>0)
 			s_s[j++]=s->id;
 	}
-	bintreeForEach(&servers,0,addServ);
+	bintreeForEach(&servers,addServ,0);
 	*s_s=j;
 	return s_s;
 }

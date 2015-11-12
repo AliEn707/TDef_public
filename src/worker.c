@@ -195,10 +195,10 @@ static inline int checkPlayerEvents(worklist * w,int _timestamp){
 		bintreeDel(&pl->events.droped, e->id, 0);
 		return 0;
 	}
-	void checkEventAvailable(void* arg,int k,void*v){
+	void checkEventAvailable(int k, void*v, void* arg){
 		sendEventChanged(eventGet((long)v));
 	}
-	void checkEventDroped(void* arg,int k,void*v){
+	void checkEventDroped(int k, void*v, void* arg){
 		sendEventDroped(eventGet((long)v));
 	}
 	bintree* sent;
@@ -228,19 +228,19 @@ static inline int checkPlayerEvents(worklist * w,int _timestamp){
 		//add events to available;
 		eventForEach(w, checkEvent);
 		//drop remained events
-		void checkDrop(void* arg,int k,void*v){
+		void checkDrop(int k,void*v,void* arg){
 			bintreeAdd(arg,k,v);
 		}
-		bintreeForEach(sent,&pl->events.droped,checkDrop);
+		bintreeForEach(sent,checkDrop,&pl->events.droped);
 		//clean end free bintree 
 		bintreeErase(sent,0);
 		free(sent);
 		pl->events.timestamp=_timestamp;
 	}
 	//send info about available events
-	bintreeForEach(&pl->events.available,0,checkEventAvailable);
+	bintreeForEach(&pl->events.available,checkEventAvailable,0);
 	//send info about dropped events
-	bintreeForEach(&pl->events.droped,0,checkEventDroped);
+	bintreeForEach(&pl->events.droped,checkEventDroped,0);
 	
 	return 0;
 }

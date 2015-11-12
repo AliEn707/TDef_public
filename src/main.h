@@ -20,6 +20,7 @@
 #include <pthread.h>
 
 #include "bintree.h"
+#include "list.h"
 
 #define BIT_1 1
 #define BIT_2 2
@@ -136,14 +137,6 @@ struct {
 	int type;	//==id event
 } room;
 
-
-typedef
-struct worklist{
-	int sock; //client socket
-	int id;  //client id
-	void * data;
-	struct worklist * next;
-} worklist;
 
 typedef
 struct {
