@@ -117,19 +117,18 @@ int dbGetPlayer(player_info * pl, char * n, int t){
 			player_id=atoi(pgValue(0,data));
 			data=pgNumber("token");
 			if (t==atoi(pgValue(0,data))){
-				//set player id
-				pl->id=player_id;
 				//remove auth entry
 				dbUpdateStart("tdef_player_auths");
 				dbUpdateValue("token","NULL");
 				sprintf(cmp,"(player_id = %d)", pl->id);
 				dbUpdateEnd(cmp, 1);
-				pgErrorPrint();
+				
+				//set player properties
+				pl->id=player_id;
 				//add another values
 			}
 			//write to log
 			dbLog(player_id, "'login'", 0, "NULL", 0, (pl->id==0 ? "'login error'" : "'login success'") );
-			pgErrorPrint();
 		}
 	}
 	t_semop(t_sem.db,&sem[1],1);
@@ -147,13 +146,18 @@ int dbFillServers(){
 int dbFillEvents(){
 	//do some stuff
 	event * e_e;
-	e_e=eventAdd(1);
-	sprintf(e_e->map,"pvz11_11");
-	sprintf(e_e->name,"#event");
-	//set timestamp;
-	config.events.timestamp=time(0);
+	struct sembuf _sem[2]={{0,-WORKER_NUM,0},{0,WORKER_NUM,0}};
+	
+	t_semop(t_sem.sheduller,&_sem[0],1);
+		e_e=eventAdd(1);
+		sprintf(e_e->map,"pvz11_11");
+		sprintf(e_e->name,"#event");
+		//set timestamp;
+		config.events.timestamp=time(0);
+	t_semop(t_sem.sheduller,&_sem[1],1);
 	return 0;
 }
+
 /*
 dbtime 2015-08-07 10:01:42.565979
 linux time Wed Sep 16 08:31:56 2015

@@ -34,6 +34,8 @@ t_sem_t t_semget(key_t key, int nsems, int semflg){
 }
 
 int t_semop(t_sem_t s, struct sembuf *sops, unsigned nsops){
+	if (s==0)
+		return 0;
 //	int $=semop(semid, sops, nsops);
 	if (sops->sem_op==0){
 		int $_$=1;
@@ -79,6 +81,8 @@ int t_semop(t_sem_t s, struct sembuf *sops, unsigned nsops){
 }
 
 int t_semctl(t_sem_t s, int semnum, int cmd){
+	if (s==0)
+		return 0;
 //	int $;//=semctl(semid, semnum, cmd);
 	if (cmd==IPC_RMID){
 		if(pthread_mutex_destroy(&s->mutex)!=0)

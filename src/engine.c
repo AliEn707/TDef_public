@@ -1,3 +1,5 @@
+#include <stdarg.h>
+
 #include "headers.h"
 
 /*
@@ -56,7 +58,14 @@ int recvData(int sock, void * buf, int size){
 	return size;
 }
 
-
+void printLog(const char* format, ...) {
+	if (config.debug == 0)
+		return;
+	va_list argptr;
+	va_start(argptr, format);
+	vfprintf(stdout, format, argptr);
+	va_end(argptr);	
+}
 
 //time passed after previous call of function
 int timePassed(struct timeval * t){
@@ -126,17 +135,15 @@ void cleanAll(){
 	if (t_sem.sheduller!=0)	
 		if (t_semctl(t_sem.sheduller,0,IPC_RMID)<0)
 			perror("t_semctl sheduller");
+	if (t_sem.events!=0)	
+		if (t_semctl(t_sem.events,0,IPC_RMID)<0)
+			perror("t_semctl events");
 	worklistErase(&config.sheduller.task);
 	
 	if (t_sem.updater!=0)	
 		if (t_semctl(t_sem.updater,0,IPC_RMID)<0)
 			perror("t_semctl sheduller");
 	worklistErase(&config.updater.task);
-	
-	//clear msg
-	if (t_sem.sheduller!=0)	
-		if (msgctl(config.sheduller.msg,IPC_RMID,0))
-			perror("mesctl sheduller");
 	
 	if (t_sem.player!=0)	
 		if (t_semctl(t_sem.player,0,IPC_RMID)<0)
