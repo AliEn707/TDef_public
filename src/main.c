@@ -146,7 +146,7 @@ int main(int argc, char* argv[]){
 	config.serverworker.port=7000;
 	config.player.port=7001;
 
-//	config.debug = 1; //always debug for devel
+	config.debug = 1; //always debug for devel
 	
 	parseArgv(argc,argv);
 	
