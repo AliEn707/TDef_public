@@ -4,7 +4,7 @@
 #include <strings.h>
 #include "main.h"
 
-
+#define MAX_KEY 1073741823 // if key more for each not works
 
 /*
 ╔══════════════════════════════════════════════════════════════╗
@@ -26,6 +26,8 @@ static int reverseInt(int x){
 int bintreeAdd(bintree* root,int key,void* data){
 	bintree* tmp=root;
 	int next;
+	if (key>MAX_KEY)
+		return 0;
 //	printDebug("add key %d\n",key);
 	while(key>0){
 		next=(int)(key&1);
@@ -132,6 +134,7 @@ void bintreeErase(bintree * root,void (f)(void*v)){
 	bintreeErase(root->next[1],f);
 	if (f!=0)
 		f(root->data);
+	root->data=0;
 	free(root->next[0]);
 	root->next[0]=0;
 	free(root->next[1]);
@@ -142,6 +145,7 @@ static void _bintreeForEach(bintree * root, void(f)(int k, void *v, void *arg), 
 	if (root==0)
 		return;
 	int i;
+//	printf("\t %d %d %d\n", key,reverseInt(key)>>1,reverseInt(key));
 	for(i=0;i<2;i++)
 		_bintreeForEach(root->next[i],f,arg,(key<<1)+i);
 	if (root->data!=0)
@@ -192,30 +196,59 @@ bintree* bintreeClone(bintree * root){
 }
 
 /*
+void removeE(int k, void* v, void* a){
+//	printf("%d %d\n",k,(int)(long)v);
+	bintreeDel(a,k,0);
+//	printf("removed: %d\n", k);
+}
+
 void show(int k, void* v, void* a){
-	printf("%d %d\n",k,v);
+	printf("%d %d\n",k,(int)(long)v);
 }
 
 int main(){
 	bintree r;
 	bintree * z;
+	int i;
+	srand(time(0));
 	memset(&r,0,sizeof(r));
 	
 	printf("%u\n",reverseInt(11));
 	
+	bintreeAdd(&r,1,(void*)1);
 	bintreeAdd(&r,3,(void*)100);
 	bintreeAdd(&r,6,(void*)143);
 	bintreeAdd(&r,7,(void*)132);
-	printf("%d\n",bintreeGet(&r,3));
+	printf("on 3: %d\n", (int)(long)bintreeGet(&r,3));
 	bintreeForEach(&r,show,0);
-	printf("\t %d\n", bintreeSize(&r));
+	printf("size %d\n", (int)bintreeSize(&r));
 	free(bintreeToArray(&r));
 
 	bintreeDel(&r,3,0);
-	printf("\t %d\n", bintreeSize(&r));
+	printf("size %d\n", (int)bintreeSize(&r));
 //	bintreeDel(&r,3);
-	printf("%d\n",bintreeGet(&r,3));
-	printf("%d\n",bintreeGet(&r,7));
+	printf("on 3: %d\n", (int)(long)bintreeGet(&r,3));
+	printf("on 7: %d\n", (int)(long)bintreeGet(&r,7));
+	bintreeErase(&r,0);
+	
+	printf("test of filling MAX_KEY/50\n");
+	float q=0;
+	int p=100;
+	int keys=MAX_KEY/50;
+	for(i=MAX_KEY-keys;i<MAX_KEY;i++){
+		bintreeAdd(&r,i,(void*)(long)i);
+		if (i%((int)(keys/p))==0){
+			printf("%g%%.",q);
+			fflush(stdout);
+			q+=100.0/p;
+		}
+	}
+	printf("\n");
+	printf("size: %d\n", (int)bintreeSize(&r));
+	printf("test of removing on each\n");
+	bintreeForEach(&r,removeE,&r);
+	printf("size: %d\n", (int)bintreeSize(&r));
+	printf("now erase\n");
 	bintreeErase(&r,0);
 }
 */
