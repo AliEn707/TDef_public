@@ -165,7 +165,7 @@ static inline int recvPlayerData(worklist* w){
 	return 0;
 }
 
-static inline int checkPlayerEvents(worklist * w,int _timestamp){
+static inline int checkPlayerEvents(worklist * w,time_t _timestamp){
 	player_info * pl=w->data;
 	int sendEventChanged(event* e){
 		short l_l;
@@ -221,7 +221,8 @@ static inline int checkPlayerEvents(worklist * w,int _timestamp){
 			after map done
 	*/
 	//check for new events
-	if (config.events.timestamp>pl->events.timestamp ||
+	if (!pl->events.updated ||
+			config.events.timestamp>pl->events.timestamp ||
 			checkMask(pl->bitmask,BM_PLAYER_CONNECTED)){
 		//create copy of sent events
 		sent=bintreeClone(&pl->events.sent);
@@ -236,6 +237,7 @@ static inline int checkPlayerEvents(worklist * w,int _timestamp){
 		bintreeErase(sent,0);
 		free(sent);
 		pl->events.timestamp=_timestamp;
+		pl->events.updated=1;
 	}
 	//send info about available events
 	bintreeForEach(&pl->events.available,checkEventAvailable,0);
@@ -245,7 +247,7 @@ static inline int checkPlayerEvents(worklist * w,int _timestamp){
 	return 0;
 }
 
-static int checkPlayerRoom(worklist * w,int _timestamp){
+static int checkPlayerRoom(worklist * w, time_t _timestamp){
 	player_info * pl=w->data;
 	room * r_r;
 	char mes;
@@ -298,7 +300,7 @@ static int checkPlayerRoom(worklist * w,int _timestamp){
 	return 0;
 }
 
-static inline int checkPlayerData(worklist* w,int _timestamp){
+static inline int checkPlayerData(worklist* w, time_t _timestamp){
 	player_info * pl=w->data;
 	checkPlayerRoom(w,_timestamp);
 	checkPlayerEvents(w,_timestamp);
@@ -350,7 +352,7 @@ void * threadWorker(void * arg){
 	int id=*(int*)arg;
 	int TPS=10;  //ticks per sec
 	struct timeval tv={0,0};
-	int _timestamp;
+	time_t _timestamp;
 	long err;
 	
 	void* proceed(worklist* tmp, void* arg){

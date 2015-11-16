@@ -66,7 +66,7 @@ player_info * dbAuth(worklist * client){
 			return 0;
 		printf("got token %d\n",token);
 		//check token
-		//dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, int timestamp){
+		//dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, time_t timestamp){
 	}else {
 		//something strange
 		//set first char of name to 0 if error 
@@ -96,7 +96,7 @@ int dbGetPlayer(player_info * pl, char * n, int t){
 	
 	//add check players from wacher list
 	
-	//dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, int timestamp)
+	//dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, time_t timestamp)
 	char name[20];
 	int user_id;
 	sprintf(name,"'%s'",n);
@@ -106,7 +106,7 @@ int dbGetPlayer(player_info * pl, char * n, int t){
 		int data=pgNumber("id");
 		user_id=atoi(pgValue(0,data));
 		//select au.* from tdef_player_auths au where ( player_id in (select id from tdef_players pl where user_id = id) ); 
-		//dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, int timestamp)
+		//dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, time_t timestamp)
 		char cmp[50];
 		sprintf(cmp,"player_id in (select id from tdef_players where user_id = %d)", user_id);
 		dbSelectFieldWhereNewer("tdef_player_auths au", "au.*", "", cmp, "", time(0)-5);
@@ -206,7 +206,7 @@ int dbSelectWhere(char* table, char* field, char* cmp, char* value){
 	return pgExec(str);
 }
 
-int dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, int timestamp){
+int dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, time_t timestamp){
 //	printf("SELECT * FROM %s WHERE (%s %s %s and updated_at > '%s');\n", table, field,cmp,value, dbTime(timestamp)); //can be used for logging
 	sprintf(str,"SELECT * FROM %s WHERE (%s %s %s and updated_at > %s);", table, field,cmp,value, dbTime(timestamp));
 	return pgExec(str);
@@ -222,7 +222,7 @@ int dbSelectFieldWhere(char* table, char* sel, char* field, char* cmp, char* val
 	return pgExec(str);
 }
 
-int dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, int timestamp){
+int dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, time_t timestamp){
 	sprintf(str,"SELECT %s FROM %s WHERE (%s %s %s and updated_at > %s);", sel, table, field, cmp, value, dbTime(timestamp));
 	return pgExec(str);
 }

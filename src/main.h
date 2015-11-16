@@ -127,7 +127,7 @@ struct {
 	} players;
 	int port;
 	int server; //FIX ME
-	int timestamp;
+	time_t timestamp;
 	int token;
 	int bitmask;
 	short status;
@@ -144,20 +144,21 @@ struct {
 	short conn;  //connection status
 //	short status;  //player status (location, ...)
 	int bitmask;  
-	int timestamp;  //need for sync checks
+	time_t timestamp;  //need for sync checks
 	struct {
 		int token;
 		//int port;  use id->info->port
 		int type; //room that player attach
 		int id; //room that player attach
-		int timestamp;
+		time_t timestamp;
 	} room;
 	struct {
 		bintree available; //events need to proseed
 		bintree sent; //events sent to client
 		bintree done;  //done events
 		bintree droped;  //events need to remove from client
-		int timestamp;
+		time_t timestamp;
+		short updated;
 	} events;
 	//base
 	int id;  //player id  from base ??
@@ -221,7 +222,7 @@ struct {
 	} serverworker;
 	
 	struct{
-		int timestamp;
+		time_t timestamp;
 	} events;
 		
 	short debug;
