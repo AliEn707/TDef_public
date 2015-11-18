@@ -29,67 +29,70 @@ player_info * dbAuth(worklist * client){
 	char name[50];
 	int token;
 	memset(name,0,sizeof(name));
-	if ((newPlayerId())<0){
+	//create player info struct
+	if ((pl=newPlayer())==0){
 		//not have ids
-		close(client->sock);
+//		close(client->sock);
 		return 0;
 	}
-	//?
-//	client->id=rand();
-	if ((pl=malloc(sizeof(player_info)))==0){
-		perror("malloc player_info");
-		close(client->sock);
-		client->id=delPlayerId(client->id);
-		return 0;
-	}
-	memset(pl,0,sizeof(player_info));
-	
-	pl->bitmask=0;
-//	pl->status=PLAYER_CONNECTED;
-	pl->conn=CONNECTED;
-	//get name 
-	$name=rand();
-	//send salt
-	if (send(client->sock,&$name,sizeof($name),MSG_NOSIGNAL)<=0)
-		return 0;
-//	printf("prepare to get data\n");
-	//get name size
-	if (recvData(client->sock,&$name,sizeof($name))<=0)
-		return 0;
-	printf("got size of name %d\n",$name);
-	if ($name!=0){
-		if (recvData(client->sock,name,$name)<=0) 
-			return 0;
-		printf("got name %s\n",name);
-		if (recvData(client->sock,&token,sizeof(token))<=0)
-			return 0;
-		printf("got token %d\n",token);
-		//check token
-		//dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, time_t timestamp){
-	}else {
-		//something strange
-		//set first char of name to 0 if error 
-		*name=0;
-	}
-	//check auth
-	//& get data from db
-	if (dbGetPlayer(pl, name, token)!=0){
-		return 0;
-	}
-	client->id=pl->id;
-	if (pl->id==0)
-		return 0;
-	//send client id
-	if (send(client->sock,&client->id,sizeof(client->id),MSG_NOSIGNAL)<=0)
-		return 0;
-	double timestamp=time(0);//ActionScript doesn't have int64... used double instead
-	if (send(client->sock,&timestamp,sizeof(timestamp),MSG_NOSIGNAL)<=0)
-		return 0;
-	return pl;
+	//we malloc client need to avoid memmory leak
+	do{
+//		client->id=rand();
+		//set client id  to 1 for future check if some errors will occur
+		client->id=1;
+		
+		pl->bitmask=0;
+//		pl->status=PLAYER_CONNECTED;
+		pl->conn=CONNECTED;
+		//get name 
+		$name=rand();	
+		//send salt
+		if (send(client->sock,&$name,sizeof($name),MSG_NOSIGNAL)<=0)
+			break;
+//		printf("prepare to get data\n");
+		//get name size
+		if (recvData(client->sock,&$name,sizeof($name))<=0)
+			break;
+		printf("got size of name %d\n",$name);
+		if ($name!=0){
+			if (recvData(client->sock,name,$name)<=0)
+				break;
+			printf("got name %s\n",name);
+			if (recvData(client->sock,&token,sizeof(token))<=0)
+				break;
+			printf("got token %d\n",token);
+			//check token
+			//dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, time_t timestamp){
+		}else {
+			//something strange
+			//set first char of name to 0 if error 
+			*name=0;
+		}
+		//check auth
+		//& get data from db
+		if (dbGetPlayer(pl, name, token)!=0){
+			break;
+		}
+		client->id=pl->id;
+		if (pl->id==0)
+			break;
+		//send client id (the same as player id)
+		if (send(client->sock,&client->id,sizeof(client->id),MSG_NOSIGNAL)<=0)
+			break;
+		double timestamp=time(0);//ActionScript doesn't have int64... used double instead
+		if (send(client->sock,&timestamp,sizeof(timestamp),MSG_NOSIGNAL)<=0)
+			break;
+		return pl;
+	}while(0);
+	//cause some errors cleanup player info
+	realizePlayer(pl);
+	return 0;
 }
 
 int dbGetPlayer(player_info * pl, char * n, int t){
 	if (n==0)
+		return -1;
+	if (*n==0) //name can't be empty
 		return -1;
 	//get and set player data
 	

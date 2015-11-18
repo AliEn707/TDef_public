@@ -159,7 +159,7 @@ struct {
 		bintree done;  //done events
 		bintree droped;  //events need to remove from client
 		time_t timestamp;
-		short updated;
+/*!*/	short updated; //  !!not safe!!
 	} events;
 	//base
 	int id;  //player id  from base ??

@@ -48,10 +48,10 @@ static int proceedPlayerMessage(worklist* w,char msg_type){
 			r_r->status=ROOM_CREATED;
 			printf("token %d\n",r_r->token);
 			t_semop(t_sem.room,&sem[0],1);		
-			//pl->timestamp=time(0);
-			if (pl->room.id!=0){
-				roomLeave(pl->room.type,pl->room.id);
-			}
+				//pl->timestamp=time(0);
+				if (pl->room.id!=0){
+					roomLeave(pl->room.type,pl->room.id);
+				}
 			t_semop(t_sem.room,&sem[1],1);
 
 			pl->room.type=room_type;
@@ -59,11 +59,11 @@ static int proceedPlayerMessage(worklist* w,char msg_type){
 			r_r->players.max=2;//change to event players max
 
 			t_semop(t_sem.room,&sem[0],1);
-			room_id=roomAdd(room_type,r_r);
-			r_r->id=room_id;
-			pl->room.id=room_id;
-			roomEnter(pl->room.type,pl->room.id);
-			r_r->status=ROOM_PREPARE;
+				room_id=roomAdd(room_type,r_r);
+				r_r->id=room_id;
+				pl->room.id=room_id;
+				roomEnter(pl->room.type,pl->room.id);
+				r_r->status=ROOM_PREPARE;
 			t_semop(t_sem.room,&sem[1],1);
 			
 			pl->room.token=rand();
@@ -77,7 +77,7 @@ static int proceedPlayerMessage(worklist* w,char msg_type){
 			printf("ask to fast find room\n");
 			//find room
 			t_semop(t_sem.room,&sem[0],1);
-			room_id=roomFind(room_type);
+				room_id=roomFind(room_type);
 			t_semop(t_sem.room,&sem[1],1);
 			//check we find room
 			if (room_id==0){
@@ -86,15 +86,15 @@ static int proceedPlayerMessage(worklist* w,char msg_type){
 				return 0;
 			}
 			t_semop(t_sem.room,&sem[0],1);
-			r_r=roomGet(room_type,room_id);
-			if (r_r!=0)
-				r_r->timestamp=time(0);
+				r_r=roomGet(room_type,room_id);
+				if (r_r!=0)
+					r_r->timestamp=time(0);
 			t_semop(t_sem.room,&sem[1],1);
 			
 //			pl->timestamp=time(0);
 			if (pl->room.id!=0){
 				t_semop(t_sem.room,&sem[0],1);
-				roomLeave(pl->room.type,pl->room.id);
+					roomLeave(pl->room.type,pl->room.id);
 				t_semop(t_sem.room,&sem[1],1);
 			}
 			setMask(pl->bitmask,BM_PLAYER_ROOM);
@@ -108,7 +108,7 @@ static int proceedPlayerMessage(worklist* w,char msg_type){
 			pl->room.id=room_id;
 			
 			t_semop(t_sem.room,&sem[0],1);
-			roomEnter(pl->room.type,pl->room.id);
+				roomEnter(pl->room.type,pl->room.id);
 			t_semop(t_sem.room,&sem[1],1);
 			
 			pl->room.token=rand();
@@ -208,11 +208,11 @@ static inline int checkPlayerEvents(worklist * w,time_t _timestamp){
 		bintreeDel(sent,e->id,0);
 		//TODO: add check for dependences
 		//if need to send number of rooms need to add check(||) for timestamp
-		if (bintreeGet(&pl->events.sent, e->id)==0){
-			if (bintreeGet(&pl->events.done, e->id)==0)
-				bintreeAdd(&pl->events.available, e->id, (void*)(long)e->id);
-			//add another checks
-		}//TODO: how to send data about remove
+			if (bintreeGet(&pl->events.sent, e->id)==0){
+				if (bintreeGet(&pl->events.done, e->id)==0)
+					bintreeAdd(&pl->events.available, e->id, (void*)(long)e->id);
+				//add another checks
+			}//TODO: how to send data about remove
 		return 0;
 	}
 	/*
@@ -221,24 +221,26 @@ static inline int checkPlayerEvents(worklist * w,time_t _timestamp){
 			after map done
 	*/
 	//check for new events
-	if (!pl->events.updated ||
-			config.events.timestamp>pl->events.timestamp ||
-			checkMask(pl->bitmask,BM_PLAYER_CONNECTED)){
-		//create copy of sent events
-		sent=bintreeClone(&pl->events.sent);
-		//add events to available;
-		eventForEach(w, checkEvent);
-		//drop remained events
-		void checkDrop(int k,void*v,void* arg){
-			bintreeAdd(arg,k,v);
+	t_semop(pl->sem,&sem[0],1);
+		if (!pl->events.updated ||
+				config.events.timestamp>pl->events.timestamp ||
+				checkMask(pl->bitmask,BM_PLAYER_CONNECTED)){
+			//create copy of sent events
+			sent=bintreeClone(&pl->events.sent);
+			//add events to available;
+			eventForEach(w, checkEvent);
+			//drop remained events
+			void checkDrop(int k,void*v,void* arg){
+				bintreeAdd(arg,k,v);
+			}
+			bintreeForEach(sent,checkDrop,&pl->events.droped);
+			//clean end free bintree 
+			bintreeErase(sent,0);
+			free(sent);
+			pl->events.timestamp=_timestamp;
+			pl->events.updated=1;
 		}
-		bintreeForEach(sent,checkDrop,&pl->events.droped);
-		//clean end free bintree 
-		bintreeErase(sent,0);
-		free(sent);
-		pl->events.timestamp=_timestamp;
-		pl->events.updated=1;
-	}
+	t_semop(pl->sem,&sem[1],1);
 	//send info about available events
 	bintreeForEach(&pl->events.available,checkEventAvailable,0);
 	//send info about dropped events

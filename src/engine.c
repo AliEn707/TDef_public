@@ -113,18 +113,28 @@ player_info * newPlayer(){
 	player_info * pl;
 	if (newPlayerId()<0)
 		return 0;
-	if ((pl=malloc(sizeof(*pl)))==0){
-		perror("malloc newPlayer");
-		return 0;
-	}
-	memset(pl,0,sizeof(*pl));
-	return pl;
+	do {
+		if ((pl=malloc(sizeof(*pl)))==0){
+			perror("malloc newPlayer");
+			return 0;
+		}
+		memset(pl,0,sizeof(*pl));
+		if((pl->sem=t_semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0) //do not take access to player info from another
+			break;
+		t_semop(pl->sem,&sem[1],1);
+		
+		return pl;
+	}while(0);
+	free(pl);
+	return 0;
 }
 
 //cleanup player_info
 void realizePlayer(void *v){
 	player_info * pl=v;
 	delPlayerId();
+	if (t_semctl(pl->sem,0,IPC_RMID)<0)
+			perror("t_semctl player");
 	free(pl);
 }
 

@@ -66,6 +66,7 @@ int clientCheck(worklist * client){
 		//check connected client
 		if ((pl=client->data)==0)
 			return -1;
+//		t_semop(pl->sem,&sem[0],1);
 		if (pl->conn==CONNECTED){
 			//all ok need to check client
 		}else{
@@ -73,6 +74,8 @@ int clientCheck(worklist * client){
 			printf("problem with status\n");
 			return -1;
 		}
+//		t_semop(pl->sem,&sem[1],1);
+		
 	}
 	return 0;
 }
@@ -84,6 +87,8 @@ void * threadWatcher(void * arg){
 	
 	void* proceed(worklist* tmp, void* arg){
 		if (clientCheck(tmp)!=0){
+			//write log about disconnecting client
+			dbLog(tmp->id, "'logout'", 0, "NULL", 0, "'disconnected'" );
 			bintreeDel(&config.player.tree,tmp->id,realizePlayer);//tmp->data == pl
 			config.watcher.client_num--;
 			close(tmp->sock);
