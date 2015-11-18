@@ -84,7 +84,8 @@ void syncTPS(int z,int TPS){
 	}
 }
 
-int newPlayerId(){
+//check and free player slots
+static inline int newPlayerId(){
 /*	int i;
 	for(i=1;i<PLAYER_MAX;i++)
 		if (config.player.ids[i]==0){
@@ -96,14 +97,35 @@ int newPlayerId(){
 		config.$players++;
 		return 1;
 	}
+	printf("not enough player slots\n");
 	return -1;
 }
 
-int delPlayerId(int id){
+//free player slot
+static inline int delPlayerId(){
 	
 //	config.player.ids[id]=0;
 	config.$players--;
 	return -1;
+}
+
+player_info * newPlayer(){
+	player_info * pl;
+	if (newPlayerId()<0)
+		return 0;
+	if ((pl=malloc(sizeof(*pl)))==0){
+		perror("malloc newPlayer");
+		return 0;
+	}
+	memset(pl,0,sizeof(*pl));
+	return pl;
+}
+
+//cleanup player_info
+void realizePlayer(void *v){
+	player_info * pl=v;
+	delPlayerId();
+	free(pl);
 }
 
 void cleanAll(){
@@ -148,7 +170,7 @@ void cleanAll(){
 	if (t_sem.player!=0)	
 		if (t_semctl(t_sem.player,0,IPC_RMID)<0)
 			perror("t_semctl player");
-	bintreeErase(&config.player.tree, free);
+	bintreeErase(&config.player.tree, realizePlayer);
 		
 	serversClean();
 }

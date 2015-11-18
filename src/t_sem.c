@@ -18,9 +18,9 @@ counting semaphore for threads
 
 t_sem_t t_semget(key_t key, int nsems, int semflg){
 	t_sem_t sem;
-	if ((sem=malloc(sizeof(struct t_sem_t)))==0)
+	if ((sem=malloc(sizeof(*sem)))==0)
 		return 0;
-	memset(sem,0,sizeof(struct t_sem_t));
+	memset(sem,0,sizeof(*sem));
 	if (pthread_mutex_init(&sem->mutex, 0)!=0){
 		free(sem);
 		return 0;

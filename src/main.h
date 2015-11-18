@@ -10,7 +10,7 @@
 //#include <sys/ipc.h>
 //#include <sys/sem.h>
 //#include <sys/shm.h>
-#include <sys/msg.h>
+//#include <sys/msg.h>
 #include <sys/socket.h>
 //#include <sys/prctl.h>
 #include <netdb.h>
@@ -19,6 +19,7 @@
 #include <time.h>
 #include <pthread.h>
 
+#include "t_sem.h"
 #include "bintree.h"
 #include "list.h"
 
@@ -162,7 +163,7 @@ struct {
 	} events;
 	//base
 	int id;  //player id  from base ??
-	
+	t_sem_t sem;
 } player_info;
 
 typedef 
@@ -243,6 +244,20 @@ struct {
 
 /////////////
 config_t config;
+
+struct t_sem_struct{
+	t_sem_t watcher;
+	t_sem_t sheduller;
+	t_sem_t updater;
+	t_sem_t serverworker;
+	t_sem_t room;
+	t_sem_t player;
+	t_sem_t events;
+	t_sem_t worker[WORKER_NUM];
+	t_sem_t db;
+} t_sem;
+
+struct sembuf sem[2];
 
 
 

@@ -11,7 +11,7 @@
 
 #define sendWorker(x,y) send(w->sock,x,y,MSG_NOSIGNAL)
 
-
+// !!!!!!!!!! worker can't ask for watcher worklist !!!!!!!!!
 static int proceedPlayerMessage(worklist* w,char msg_type){
 	player_info * pl=w->data;
 //	int token;
