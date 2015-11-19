@@ -132,9 +132,11 @@ player_info * newPlayer(){
 //cleanup player_info
 void realizePlayer(void *v){
 	player_info * pl=v;
-	delPlayerId();
+	if (v==0)
+		return;
 	if (t_semctl(pl->sem,0,IPC_RMID)<0)
 			perror("t_semctl player");
+	delPlayerId();
 	free(pl);
 }
 
