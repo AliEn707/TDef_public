@@ -59,11 +59,16 @@ int recvData(int sock, void * buf, int size){
 }
 
 void printLog(const char* format, ...) {
-	if (config.debug == 0)
-		return;
+	FILE *f;
 	va_list argptr;
 	va_start(argptr, format);
-	vfprintf(stdout, format, argptr);
+	if (config.debug)
+		vfprintf(stdout, format, argptr);
+	if (config.log_file)
+		if ((f=fopen(config.log_file, "a"))!=0){
+			vfprintf(f, format, argptr);
+			fclose(f);
+		}
 	va_end(argptr);	
 }
 

@@ -149,14 +149,15 @@ int dbFillEvents(){
 	//do some stuff
 	event * e_e;
 	struct sembuf _sem[2]={{0,-WORKER_NUM,0},{0,WORKER_NUM,0}};
-	
-	t_semop(t_sem.sheduller,&_sem[0],1);
+	//set semaphore to busy
+	t_semop(t_sem.events,&_sem[0],1);
+		eventErase();
 		e_e=eventAdd(1);
 		sprintf(e_e->map,"pvz11_11");
 		sprintf(e_e->name,"#event");
 		//set timestamp;
 		config.events.timestamp=time(0);
-	t_semop(t_sem.sheduller,&_sem[1],1);
+	t_semop(t_sem.events,&_sem[1],1);
 	return 0;
 }
 

@@ -24,3 +24,5 @@ int eventRoomAdd(int id);
 int eventRoomDel(int id);
 
 int eventForEach(void * p, int(f)(void*,event*));
+
+int eventErase();

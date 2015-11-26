@@ -20,7 +20,6 @@ extern "C" {
 #include "events.h"
 }
 
-event _event[1]; //change to map of events
 using namespace std;
 
 map <int, event * > events;
@@ -93,4 +92,14 @@ extern "C" {
 		return 0;
 	}
 	
+	int eventErase(){
+		//add some stuff
+		typedef map <int, event *>::iterator it_type;
+		for(it_type iterator = events.begin(); iterator != events.end(); iterator++) {
+//			std::cout << iterator->second << std::endl;
+			free(iterator->second);
+		}
+		events.clear();
+		return 0;
+	}
 }

@@ -222,13 +222,14 @@ static inline int checkPlayerEvents(worklist * w,time_t _timestamp){
 	*/
 	//check for new events
 	t_semop(pl->sem,&sem[0],1);
+	t_semop(t_sem.events,&sem[0],1);//sem for timestamp check and events proceed
 		if (!pl->events.updated ||
 				config.events.timestamp>pl->events.timestamp ||
 				checkMask(pl->bitmask,BM_PLAYER_CONNECTED)){
 			//create copy of sent events
 			sent=bintreeClone(&pl->events.sent);
 			//add events to available;
-			eventForEach(w, checkEvent);
+/*!*/		eventForEach(w, checkEvent);
 			//drop remained events
 			void checkDrop(int k,void*v,void* arg){
 				bintreeAdd(arg,k,v);
@@ -238,8 +239,9 @@ static inline int checkPlayerEvents(worklist * w,time_t _timestamp){
 			bintreeErase(sent,0);
 			free(sent);
 			pl->events.timestamp=_timestamp;
-			pl->events.updated=1;
+/*!*/		pl->events.updated=1; 
 		}
+	t_semop(t_sem.events,&sem[1],1);
 	t_semop(pl->sem,&sem[1],1);
 	//send info about available events
 	bintreeForEach(&pl->events.available,checkEventAvailable,0);
