@@ -84,8 +84,9 @@
 
 //out message types
 #define MESSAGE_PLAYER_CHANGE 1
-#define MESSAGE_EVENT_CHANGE 2
-#define MESSAGE_GAME_START 3
+#define MESSAGE_GAME_START 2
+#define MESSAGE_EVENT_CHANGE 3
+#define MESSAGE_EVENT_DROP 4
 //
 #define MESSAGE_CREATED 2
 #define MESSAGE_CHANGED 2
@@ -94,9 +95,6 @@
 #define MESSAGE_ROOM_ACT 76//'L' ask for add or edit rooms
 #define MESSAGE_MOVE 77//'M'  ask for change status
 #define MESSAGE_INFO 73//'I'  ask for info about changes
-//move actions
-#define MESSAGE_LOBBY 78 //'N'  move to lobby
-#define MESSAGE_MAP 77 //'M'  move to map
 //room actions
 #define MESSAGE_CREATE_ROOM 99 //'c'
 #define MESSAGE_FAST_ROOM 2
@@ -255,6 +253,7 @@ struct t_sem_struct{
 	t_sem_t events;
 	t_sem_t worker[WORKER_NUM];
 	t_sem_t db;
+	t_sem_t log;
 } t_sem;
 
 struct sembuf sem[2];

@@ -104,6 +104,12 @@ int core(){
 	dbFillServers();
 	//set tasks for sheduller
 	
+	
+	//set semaphores
+	if((t_sem.log=t_semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0)
+		perror("(main) semget log");
+	t_semop(t_sem.log,&sem[1],1);
+	
 	//start threads
 //	config.sheduller.thread=startSheduller(0);
 	config.updater.thread=startUpdater();

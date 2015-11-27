@@ -189,9 +189,13 @@ static inline int checkPlayerEvents(worklist * w,time_t _timestamp){
 		return 0;
 	}
 	int sendEventDroped(event* e){
+        char mes;
 		if (e==0)
 			return 0;
-		//TODO: add sent info
+		mes=MESSAGE_EVENT_DROP;
+		sendData(w->sock,&mes,sizeof(mes));
+		sendData(w->sock,&e->id,sizeof(e->id));
+		//
 		bintreeDel(&pl->events.droped, e->id, 0);
 		return 0;
 	}

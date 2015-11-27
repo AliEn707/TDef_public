@@ -64,11 +64,14 @@ void printLog(const char* format, ...) {
 	va_start(argptr, format);
 	if (config.debug)
 		vfprintf(stdout, format, argptr);
-	if (config.log_file)
-		if ((f=fopen(config.log_file, "a"))!=0){
-			vfprintf(f, format, argptr);
-			fclose(f);
-		}
+	if (config.log_file){
+		t_semop(t_sem.log,&sem[0],1);
+			if ((f=fopen(config.log_file, "a"))!=0){
+				vfprintf(f, format, argptr);
+				fclose(f);
+			}
+		t_semop(t_sem.log,&sem[1],1);
+	}
 	va_end(argptr);	
 }
 
@@ -157,6 +160,10 @@ void cleanAll(){
 	if (t_sem.db!=0)	
 		if (t_semctl(t_sem.db,0,IPC_RMID)<0)
 			perror("t_semctl db");
+		
+	if (t_sem.log!=0)	
+		if (t_semctl(t_sem.log,0,IPC_RMID)<0)
+			perror("t_semctl log");
 		
 	if (t_sem.serverworker!=0)	
 		if (t_semctl(t_sem.serverworker,0,IPC_RMID)<0)
