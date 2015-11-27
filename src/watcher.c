@@ -8,6 +8,8 @@
 ╚══════════════════════════════════════════════════════════════╝
 */
 
+// !!!!!!!!!! watcher can't ask for listener worklist !!!!!!!!!
+
 int getFreeWorker(){
 	int i;
 	int min,id=0;
@@ -43,8 +45,8 @@ int clientCheck(worklist * client){
 			t_semop(t_sem.player,&sem[0],1);
 				if (bintreeAdd(&config.player.tree,pl->id,pl)==0){
 					perror("bintreeAdd player_info");
-					close(client->sock);
-					client->id=delPlayerId(client->id);
+//					close(client->sock);
+					pl->conn=FAIL;
 				}else{
 					t_semop(t_sem.worker[worker],&sem[0],1);
 						config.worker[worker].client_num++;
@@ -60,9 +62,11 @@ int clientCheck(worklist * client){
 			printf("bad auth\n");
 			return 1;
 		}
-	} else{
+	}else{
 		//check connected client
-		pl=client->data;
+		if ((pl=client->data)==0)
+			return -1;
+//		t_semop(pl->sem,&sem[0],1);
 		if (pl->conn==CONNECTED){
 			//all ok need to check client
 		}else{
@@ -70,33 +74,40 @@ int clientCheck(worklist * client){
 			printf("problem with status\n");
 			return -1;
 		}
+//		t_semop(pl->sem,&sem[1],1);
+		
 	}
 	return 0;
 }
 
 void * threadWatcher(void * arg){
 	int id=*(int*)arg;
-	worklist * tmp;
 	int TPS=3;  //ticks per sec
 	struct timeval tv={0,0};
+	
+	void* proceed(worklist* tmp, void* arg){
+		if (clientCheck(tmp)!=0){
+			//write log about disconnecting client
+			dbLog(tmp->id, "'logout'", 0, "NULL", 0, "'disconnected'" );
+			bintreeDel(&config.player.tree,tmp->id,realizePlayer);//tmp->data == pl
+			config.watcher.client_num--;
+			close(tmp->sock);
+			printf("watcher del client\n");
+			return (void*)1;
+		}
+		//some work
+		return 0;
+	}
+	
 	timePassed(&tv);
 	free(arg);
 	usleep(100);
 	printf("Watcher %d started\n",id);
 	
 	while(config.run){
-		tmp=&config.watcher.client;
 		t_semop(t_sem.watcher,&sem[0],1);
-			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
-				if (clientCheck(tmp)!=0){
-					delPlayerId(tmp->id);
-					bintreeDel(&config.player.tree,tmp->id,free);//tmp->data == pl
-					tmp=worklistDel(&config.watcher.client,tmp->id);
-					config.watcher.client_num--;
-					printf("watcher del client\n");
-				}
-				//some work
-			}
+			//do actions
+			worklistForEachRemove(&config.watcher.client,proceed,0);
 		t_semop(t_sem.watcher,&sem[1],1);
 		//some work
 		syncTPS(timePassed(&tv),TPS);

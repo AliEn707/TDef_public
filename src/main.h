@@ -10,7 +10,7 @@
 //#include <sys/ipc.h>
 //#include <sys/sem.h>
 //#include <sys/shm.h>
-#include <sys/msg.h>
+//#include <sys/msg.h>
 #include <sys/socket.h>
 //#include <sys/prctl.h>
 #include <netdb.h>
@@ -19,7 +19,9 @@
 #include <time.h>
 #include <pthread.h>
 
+#include "t_sem.h"
 #include "bintree.h"
+#include "list.h"
 
 #define BIT_1 1
 #define BIT_2 2
@@ -82,8 +84,9 @@
 
 //out message types
 #define MESSAGE_PLAYER_CHANGE 1
-#define MESSAGE_EVENT_CHANGE 2
-#define MESSAGE_GAME_START 3
+#define MESSAGE_GAME_START 2
+#define MESSAGE_EVENT_CHANGE 3
+#define MESSAGE_EVENT_DROP 4
 //
 #define MESSAGE_CREATED 2
 #define MESSAGE_CHANGED 2
@@ -92,9 +95,6 @@
 #define MESSAGE_ROOM_ACT 76//'L' ask for add or edit rooms
 #define MESSAGE_MOVE 77//'M'  ask for change status
 #define MESSAGE_INFO 73//'I'  ask for info about changes
-//move actions
-#define MESSAGE_LOBBY 78 //'N'  move to lobby
-#define MESSAGE_MAP 77 //'M'  move to map
 //room actions
 #define MESSAGE_CREATE_ROOM 99 //'c'
 #define MESSAGE_FAST_ROOM 2
@@ -126,7 +126,7 @@ struct {
 	} players;
 	int port;
 	int server; //FIX ME
-	int timestamp;
+	time_t timestamp;
 	int token;
 	int bitmask;
 	short status;
@@ -138,37 +138,30 @@ struct {
 
 
 typedef
-struct worklist{
-	int sock; //client socket
-	int id;  //client id
-	void * data;
-	struct worklist * next;
-} worklist;
-
-typedef
 struct {
 	//not base
 	short conn;  //connection status
 //	short status;  //player status (location, ...)
 	int bitmask;  
-	int timestamp;  //need for sync checks
+	time_t timestamp;  //need for sync checks
 	struct {
 		int token;
 		//int port;  use id->info->port
 		int type; //room that player attach
 		int id; //room that player attach
-		int timestamp;
+		time_t timestamp;
 	} room;
 	struct {
 		bintree available; //events need to proseed
 		bintree sent; //events sent to client
 		bintree done;  //done events
 		bintree droped;  //events need to remove from client
-		int timestamp;
+		time_t timestamp;
+/*!*/	short updated; //  !!not safe!!
 	} events;
 	//base
 	int id;  //player id  from base ??
-	
+	t_sem_t sem;
 } player_info;
 
 typedef 
@@ -228,7 +221,7 @@ struct {
 	} serverworker;
 	
 	struct{
-		int timestamp;
+		time_t timestamp;
 	} events;
 		
 	short debug;
@@ -249,6 +242,21 @@ struct {
 
 /////////////
 config_t config;
+
+struct t_sem_struct{
+	t_sem_t watcher;
+	t_sem_t sheduller;
+	t_sem_t updater;
+	t_sem_t serverworker;
+	t_sem_t room;
+	t_sem_t player;
+	t_sem_t events;
+	t_sem_t worker[WORKER_NUM];
+	t_sem_t db;
+	t_sem_t log;
+} t_sem;
+
+struct sembuf sem[2];
 
 
 

@@ -1,3 +1,5 @@
+#include <stdarg.h>
+
 #include "headers.h"
 
 /*
@@ -56,7 +58,22 @@ int recvData(int sock, void * buf, int size){
 	return size;
 }
 
-
+void printLog(const char* format, ...) {
+	FILE *f;
+	va_list argptr;
+	va_start(argptr, format);
+	if (config.debug)
+		vfprintf(stdout, format, argptr);
+	if (config.log_file){
+		t_semop(t_sem.log,&sem[0],1);
+			if ((f=fopen(config.log_file, "a"))!=0){
+				vfprintf(f, format, argptr);
+				fclose(f);
+			}
+		t_semop(t_sem.log,&sem[1],1);
+	}
+	va_end(argptr);	
+}
 
 //time passed after previous call of function
 int timePassed(struct timeval * t){
@@ -75,7 +92,8 @@ void syncTPS(int z,int TPS){
 	}
 }
 
-int newPlayerId(){
+//check and free player slots
+static inline int newPlayerId(){
 /*	int i;
 	for(i=1;i<PLAYER_MAX;i++)
 		if (config.player.ids[i]==0){
@@ -87,14 +105,47 @@ int newPlayerId(){
 		config.$players++;
 		return 1;
 	}
+	printf("not enough player slots\n");
 	return -1;
 }
 
-int delPlayerId(int id){
+//free player slot
+static inline int delPlayerId(){
 	
 //	config.player.ids[id]=0;
 	config.$players--;
 	return -1;
+}
+
+player_info * newPlayer(){
+	player_info * pl;
+	if (newPlayerId()<0)
+		return 0;
+	do {
+		if ((pl=malloc(sizeof(*pl)))==0){
+			perror("malloc newPlayer");
+			return 0;
+		}
+		memset(pl,0,sizeof(*pl));
+		if((pl->sem=t_semget(IPC_PRIVATE, 1, 0755 | IPC_CREAT))==0) //do not take access to player info from another
+			break;
+		t_semop(pl->sem,&sem[1],1);
+		
+		return pl;
+	}while(0);
+	free(pl);
+	return 0;
+}
+
+//cleanup player_info
+void realizePlayer(void *v){
+	player_info * pl=v;
+	if (v==0)
+		return;
+	if (t_semctl(pl->sem,0,IPC_RMID)<0)
+			perror("t_semctl player");
+	delPlayerId();
+	free(pl);
 }
 
 void cleanAll(){
@@ -109,6 +160,10 @@ void cleanAll(){
 	if (t_sem.db!=0)	
 		if (t_semctl(t_sem.db,0,IPC_RMID)<0)
 			perror("t_semctl db");
+		
+	if (t_sem.log!=0)	
+		if (t_semctl(t_sem.log,0,IPC_RMID)<0)
+			perror("t_semctl log");
 		
 	if (t_sem.serverworker!=0)	
 		if (t_semctl(t_sem.serverworker,0,IPC_RMID)<0)
@@ -126,6 +181,9 @@ void cleanAll(){
 	if (t_sem.sheduller!=0)	
 		if (t_semctl(t_sem.sheduller,0,IPC_RMID)<0)
 			perror("t_semctl sheduller");
+	if (t_sem.events!=0)	
+		if (t_semctl(t_sem.events,0,IPC_RMID)<0)
+			perror("t_semctl events");
 	worklistErase(&config.sheduller.task);
 	
 	if (t_sem.updater!=0)	
@@ -133,15 +191,10 @@ void cleanAll(){
 			perror("t_semctl sheduller");
 	worklistErase(&config.updater.task);
 	
-	//clear msg
-	if (t_sem.sheduller!=0)	
-		if (msgctl(config.sheduller.msg,IPC_RMID,0))
-			perror("mesctl sheduller");
-	
 	if (t_sem.player!=0)	
 		if (t_semctl(t_sem.player,0,IPC_RMID)<0)
 			perror("t_semctl player");
-	bintreeErase(&config.player.tree, free);
+	bintreeErase(&config.player.tree, realizePlayer);
 		
 	serversClean();
 }

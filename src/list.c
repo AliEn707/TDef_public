@@ -45,12 +45,22 @@ void worklistErase(worklist* root){
 	root->next=0;
 }
 
-void worklistForEach(worklist* root, void*(f)(worklist* w)){
+void worklistForEachRemove(worklist* root, void*(f)(worklist* w, void* arg), void* arg){
 	worklist * tmp=root;
 	for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
-		if (f(tmp)!=0)
+		if (f(tmp, arg)!=0)
 			tmp=worklistDel(root,tmp->id);
 	}
+}
+
+void* worklistForEachReturn(worklist* root, void*(f)(worklist* w, void* arg), void* arg){
+	worklist * tmp=root;
+	void *o;
+	for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
+		if ((o=f(tmp, arg))!=0)
+			return o;
+	}
+	return o;
 }
 
 /*

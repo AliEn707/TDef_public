@@ -13,6 +13,7 @@ int pgColumns();
 
 //get last error
 char* pgError();
+void pgErrorPrint();
 
 //number of column by name
 int pgNumber(char * name);

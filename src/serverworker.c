@@ -217,30 +217,31 @@ static inline int recvServerData(worklist* w){
 
 void * threadServerWorker(void * arg){
 	int id=*(int*)arg;
-//	int i;
-	worklist * tmp;
 	int TPS=10;  //ticks per sec
 	struct timeval tv={0,0};
+	
+	void* proceed(worklist* tmp, void* arg){
+		//get data from server about players and statistics
+		if (recvServerData(tmp)!=0){
+			printf("del serv from list\n"); //TODO: check why drops here
+			//close socket
+			close(tmp->sock);
+			//delete client
+			config.serverworker.client_num--;
+			return (void*)1;
+		}
+		return 0;
+	}
+	
 	timePassed(&tv);
 	free(arg);
 	serversLoad();
 	printf("ServerWorker %d started\n",id);
 	
 	while(config.run){
-		tmp=&config.serverworker.client;
 		t_semop(t_sem.serverworker,&sem[0],1);
-			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
-				//get data from server about players and statistics
-				if (recvServerData(tmp)!=0){
-					printf("del serv from list\n"); //TODO: check why drops here
-					//close socket
-					close(tmp->sock);
-					//delete client
-					tmp=worklistDel(&config.serverworker.client,tmp->id);
-					config.serverworker.client_num--;
-				}
-				
-			}
+			//do actions
+			worklistForEachRemove(&config.serverworker.client,proceed,0);
 		t_semop(t_sem.serverworker,&sem[1],1);
 			
 		t_semop(t_sem.room,&sem[1],1);

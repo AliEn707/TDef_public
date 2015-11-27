@@ -18,9 +18,9 @@ counting semaphore for threads
 
 t_sem_t t_semget(key_t key, int nsems, int semflg){
 	t_sem_t sem;
-	if ((sem=malloc(sizeof(struct t_sem_t)))==0)
+	if ((sem=malloc(sizeof(*sem)))==0)
 		return 0;
-	memset(sem,0,sizeof(struct t_sem_t));
+	memset(sem,0,sizeof(*sem));
 	if (pthread_mutex_init(&sem->mutex, 0)!=0){
 		free(sem);
 		return 0;
@@ -34,6 +34,8 @@ t_sem_t t_semget(key_t key, int nsems, int semflg){
 }
 
 int t_semop(t_sem_t s, struct sembuf *sops, unsigned nsops){
+	if (s==0)
+		return 0;
 //	int $=semop(semid, sops, nsops);
 	if (sops->sem_op==0){
 		int $_$=1;
@@ -79,6 +81,8 @@ int t_semop(t_sem_t s, struct sembuf *sops, unsigned nsops){
 }
 
 int t_semctl(t_sem_t s, int semnum, int cmd){
+	if (s==0)
+		return 0;
 //	int $;//=semctl(semid, semnum, cmd);
 	if (cmd==IPC_RMID){
 		if(pthread_mutex_destroy(&s->mutex)!=0)

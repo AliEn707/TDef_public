@@ -1,7 +1,7 @@
 ﻿#include <libpq-fe.h>
 #include <stdio.h>
 
-#define print_error() printf("%s",PQerrorMessage(connection))
+#include "postgres.h"
 
 /*
 ╔══════════════════════════════════════════════════════════════╗
@@ -14,7 +14,7 @@
 
 static PGconn *connection=0;
 
-static PGresult * last_result=0;
+static PGresult * last_result=0; //change to array of results
 
 //char data[]="host=localhost\ndbname=wss_devel\nuser=dbuser\npassword=passwd";
 
@@ -51,6 +51,7 @@ int pgExec(char * query){
 		return 1;
 	pgClear();
 	last_result= PQexec(connection,query);
+	pgErrorPrint();
 	return PQresultStatus(last_result);
 }//must be cleared by PQclear
 
@@ -75,6 +76,12 @@ int pgColumns(){
 
 char* pgError(){
 	return PQerrorMessage(connection);
+}
+
+void pgErrorPrint(){
+	char * str=PQerrorMessage(connection);
+	if (str[0]!=0)
+		printf("DB Error: %s\n", PQerrorMessage(connection)); //change to log print
 }
 
 int pgNumber(char * name){

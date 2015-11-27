@@ -11,7 +11,7 @@
 
 #define sendWorker(x,y) send(w->sock,x,y,MSG_NOSIGNAL)
 
-
+// !!!!!!!!!! worker can't ask for watcher worklist !!!!!!!!!
 static int proceedPlayerMessage(worklist* w,char msg_type){
 	player_info * pl=w->data;
 //	int token;
@@ -48,10 +48,10 @@ static int proceedPlayerMessage(worklist* w,char msg_type){
 			r_r->status=ROOM_CREATED;
 			printf("token %d\n",r_r->token);
 			t_semop(t_sem.room,&sem[0],1);		
-			//pl->timestamp=time(0);
-			if (pl->room.id!=0){
-				roomLeave(pl->room.type,pl->room.id);
-			}
+				//pl->timestamp=time(0);
+				if (pl->room.id!=0){
+					roomLeave(pl->room.type,pl->room.id);
+				}
 			t_semop(t_sem.room,&sem[1],1);
 
 			pl->room.type=room_type;
@@ -59,11 +59,11 @@ static int proceedPlayerMessage(worklist* w,char msg_type){
 			r_r->players.max=2;//change to event players max
 
 			t_semop(t_sem.room,&sem[0],1);
-			room_id=roomAdd(room_type,r_r);
-			r_r->id=room_id;
-			pl->room.id=room_id;
-			roomEnter(pl->room.type,pl->room.id);
-			r_r->status=ROOM_PREPARE;
+				room_id=roomAdd(room_type,r_r);
+				r_r->id=room_id;
+				pl->room.id=room_id;
+				roomEnter(pl->room.type,pl->room.id);
+				r_r->status=ROOM_PREPARE;
 			t_semop(t_sem.room,&sem[1],1);
 			
 			pl->room.token=rand();
@@ -77,7 +77,7 @@ static int proceedPlayerMessage(worklist* w,char msg_type){
 			printf("ask to fast find room\n");
 			//find room
 			t_semop(t_sem.room,&sem[0],1);
-			room_id=roomFind(room_type);
+				room_id=roomFind(room_type);
 			t_semop(t_sem.room,&sem[1],1);
 			//check we find room
 			if (room_id==0){
@@ -86,15 +86,15 @@ static int proceedPlayerMessage(worklist* w,char msg_type){
 				return 0;
 			}
 			t_semop(t_sem.room,&sem[0],1);
-			r_r=roomGet(room_type,room_id);
-			if (r_r!=0)
-				r_r->timestamp=time(0);
+				r_r=roomGet(room_type,room_id);
+				if (r_r!=0)
+					r_r->timestamp=time(0);
 			t_semop(t_sem.room,&sem[1],1);
 			
 //			pl->timestamp=time(0);
 			if (pl->room.id!=0){
 				t_semop(t_sem.room,&sem[0],1);
-				roomLeave(pl->room.type,pl->room.id);
+					roomLeave(pl->room.type,pl->room.id);
 				t_semop(t_sem.room,&sem[1],1);
 			}
 			setMask(pl->bitmask,BM_PLAYER_ROOM);
@@ -108,7 +108,7 @@ static int proceedPlayerMessage(worklist* w,char msg_type){
 			pl->room.id=room_id;
 			
 			t_semop(t_sem.room,&sem[0],1);
-			roomEnter(pl->room.type,pl->room.id);
+				roomEnter(pl->room.type,pl->room.id);
 			t_semop(t_sem.room,&sem[1],1);
 			
 			pl->room.token=rand();
@@ -165,7 +165,7 @@ static inline int recvPlayerData(worklist* w){
 	return 0;
 }
 
-static inline int checkPlayerEvents(worklist * w,int _timestamp){
+static inline int checkPlayerEvents(worklist * w,time_t _timestamp){
 	player_info * pl=w->data;
 	int sendEventChanged(event* e){
 		short l_l;
@@ -189,16 +189,20 @@ static inline int checkPlayerEvents(worklist * w,int _timestamp){
 		return 0;
 	}
 	int sendEventDroped(event* e){
+        char mes;
 		if (e==0)
 			return 0;
-		//TODO: add sent info
+		mes=MESSAGE_EVENT_DROP;
+		sendData(w->sock,&mes,sizeof(mes));
+		sendData(w->sock,&e->id,sizeof(e->id));
+		//
 		bintreeDel(&pl->events.droped, e->id, 0);
 		return 0;
 	}
-	void checkEventAvailable(void* arg,int k,void*v){
+	void checkEventAvailable(int k, void*v, void* arg){
 		sendEventChanged(eventGet((long)v));
 	}
-	void checkEventDroped(void* arg,int k,void*v){
+	void checkEventDroped(int k, void*v, void* arg){
 		sendEventDroped(eventGet((long)v));
 	}
 	bintree* sent;
@@ -208,11 +212,11 @@ static inline int checkPlayerEvents(worklist * w,int _timestamp){
 		bintreeDel(sent,e->id,0);
 		//TODO: add check for dependences
 		//if need to send number of rooms need to add check(||) for timestamp
-		if (bintreeGet(&pl->events.sent, e->id)==0){
-			if (bintreeGet(&pl->events.done, e->id)==0)
-				bintreeAdd(&pl->events.available, e->id, (void*)(long)e->id);
-			//add another checks
-		}//TODO: how to send data about remove
+			if (bintreeGet(&pl->events.sent, e->id)==0){
+				if (bintreeGet(&pl->events.done, e->id)==0)
+					bintreeAdd(&pl->events.available, e->id, (void*)(long)e->id);
+				//add another checks
+			}//TODO: how to send data about remove
 		return 0;
 	}
 	/*
@@ -221,31 +225,37 @@ static inline int checkPlayerEvents(worklist * w,int _timestamp){
 			after map done
 	*/
 	//check for new events
-	if (config.events.timestamp>pl->events.timestamp ||
-			checkMask(pl->bitmask,BM_PLAYER_CONNECTED)){
-		//create copy of sent events
-		sent=bintreeClone(&pl->events.sent);
-		//add events to available;
-		eventForEach(w, checkEvent);
-		//drop remained events
-		void checkDrop(void* arg,int k,void*v){
-			bintreeAdd(arg,k,v);
+	t_semop(pl->sem,&sem[0],1);
+	t_semop(t_sem.events,&sem[0],1);//sem for timestamp check and events proceed
+		if (!pl->events.updated ||
+				config.events.timestamp>pl->events.timestamp ||
+				checkMask(pl->bitmask,BM_PLAYER_CONNECTED)){
+			//create copy of sent events
+			sent=bintreeClone(&pl->events.sent);
+			//add events to available;
+/*!*/		eventForEach(w, checkEvent);
+			//drop remained events
+			void checkDrop(int k,void*v,void* arg){
+				bintreeAdd(arg,k,v);
+			}
+			bintreeForEach(sent,checkDrop,&pl->events.droped);
+			//clean end free bintree 
+			bintreeErase(sent,0);
+			free(sent);
+			pl->events.timestamp=_timestamp;
+/*!*/		pl->events.updated=1; 
 		}
-		bintreeForEach(sent,&pl->events.droped,checkDrop);
-		//clean end free bintree 
-		bintreeErase(sent,0);
-		free(sent);
-		pl->events.timestamp=_timestamp;
-	}
+	t_semop(t_sem.events,&sem[1],1);
+	t_semop(pl->sem,&sem[1],1);
 	//send info about available events
-	bintreeForEach(&pl->events.available,0,checkEventAvailable);
+	bintreeForEach(&pl->events.available,checkEventAvailable,0);
 	//send info about dropped events
-	bintreeForEach(&pl->events.droped,0,checkEventDroped);
+	bintreeForEach(&pl->events.droped,checkEventDroped,0);
 	
 	return 0;
 }
 
-static int checkPlayerRoom(worklist * w,int _timestamp){
+static int checkPlayerRoom(worklist * w, time_t _timestamp){
 	player_info * pl=w->data;
 	room * r_r;
 	char mes;
@@ -298,7 +308,7 @@ static int checkPlayerRoom(worklist * w,int _timestamp){
 	return 0;
 }
 
-static inline int checkPlayerData(worklist* w,int _timestamp){
+static inline int checkPlayerData(worklist* w, time_t _timestamp){
 	player_info * pl=w->data;
 	checkPlayerRoom(w,_timestamp);
 	checkPlayerEvents(w,_timestamp);
@@ -348,44 +358,46 @@ static inline int sendPlayerData(worklist* w){
 
 void * threadWorker(void * arg){
 	int id=*(int*)arg;
-	worklist * tmp;
-	worklist * task=&config.worker[id].client;
-	t_sem_t worker_sem=t_sem.worker[id];
 	int TPS=10;  //ticks per sec
 	struct timeval tv={0,0};
+	time_t _timestamp;
+	long err;
+	
+	void* proceed(worklist* tmp, void* arg){
+		//some work
+		err=0;
+		//get data from player if any
+		if (recvPlayerData(tmp)!=0){
+//		printf("cant recv\n");
+			err++;
+		}
+		//check changes of player
+		checkPlayerData(tmp,_timestamp);
+		sendBeep(tmp);
+		//send data to player if need
+		if (sendPlayerData(tmp)!=0){
+//		printf("cant send\n");
+			err++;
+		}
+		if (err!=0){
+			printf("player %d lost connection\n", ((player_info*)(tmp->data))->id);
+			//set player lost connection
+			((player_info*)(tmp->data))->conn=FAIL;
+			config.worker[id].client_num--;
+		}
+		//if err!=0, tmp will be removed
+		return (void*)err;
+	}
+	
 	timePassed(&tv);
 	free(arg);
 	printf("Worker %d started\n",id);
-	short err;
 	while(config.run){
-		int _timestamp=time(0);
-		tmp=task;
-		t_semop(worker_sem,&sem[0],1);
-			for(tmp=tmp->next;tmp!=0;tmp=tmp->next){
-				//some work
-				err=0;
-				//get data from player if any
-				if (recvPlayerData(tmp)!=0){
-//					printf("cant recv\n");
-					err++;
-				}
-				//check changes of player
-				checkPlayerData(tmp,_timestamp);
-				sendBeep(tmp);
-				//send data to player if need
-				if (sendPlayerData(tmp)!=0){
-//					printf("cant send\n");
-					err++;
-				}
-				if (err!=0){
-//					printf("lost connection\n");
-					//set player lost connection
-					((player_info*)(tmp->data))->conn=FAIL;
-					tmp=worklistDel(task,tmp->id);
-					config.worker[id].client_num--;
-				}
-			}
-		t_semop(worker_sem,&sem[1],1);
+		_timestamp=time(0);
+		t_semop(t_sem.worker[id],&sem[0],1);
+			//do actions
+			worklistForEachRemove(&config.worker[id].client,proceed,0);
+		t_semop(t_sem.worker[id],&sem[1],1);
 		//some work
 		syncTPS(timePassed(&tv),TPS);
 	}

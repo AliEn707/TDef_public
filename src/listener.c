@@ -96,15 +96,21 @@ void * threadListener(void * arg){
 					close(sock);
 				}else{
 					do{
+						char str[300];
 						printf("player connected: %s\n",t_t);
 						if (strcmp(t_t, "FlashHello^_^")==0){
 							printf("connect using Flash\n");
+							sprintf(str,"'connected using Flash connector'");//add another info
 						}else if (strcmp(t_t, "JavaApplet^_^")==0){
 							printf("connect using Java\n");
+							sprintf(str,"'connected using Java connector'");
 						}else{
 							close(sock);
 							break;
 						}
+						t_semop(t_sem.db,&sem[0],1);
+							dbLog(0, "'connect'", 0, "NULL", 0, str);
+						t_semop(t_sem.db,&sem[1],1);
 		//				printf("semval= %d\n",t_semctl(config.watcher.sem,1,GETVAL));
 						t_semop(t_sem.watcher,&sem[0],1);
 							config.watcher.client_num++;

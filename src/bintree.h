@@ -16,9 +16,12 @@ int bintreeDel(bintree* root, int key, void (f)(void*v));
 
 void bintreeErase(bintree * root,void (f)(void*v));
 
-void bintreeForEach(bintree * root,void* arg,void(f)(void* arg,int k,void*v));
+void bintreeForEach(bintree * root,void(f)(int k,void *v,void *arg), void* arg);
 
 int bintreeSize(bintree * root);
 
-void* bintreeToArray(bintree * root);
+//returns array of elements created by malloc
+void** bintreeToArray(bintree * root);
+
+//create clone of bintree created by malloc
 bintree* bintreeClone(bintree * root);
