@@ -79,8 +79,6 @@
 #define BM_PLAYER_STATUS BIT_2
 #define BM_PLAYER_TIMESTAMP BIT_3
 #define BM_PLAYER_ROOM BIT_3
-//event bitmasks
-#define BM_EVENT_MAP_NAME BIT_1
 
 //out message types
 #define MESSAGE_PLAYER_CHANGE 1
@@ -88,9 +86,6 @@
 #define MESSAGE_EVENT_CHANGE 3
 #define MESSAGE_EVENT_DROP 4
 //
-#define MESSAGE_CREATED 2
-#define MESSAGE_CHANGED 2
-#define MESSAGE_DELETED 2
 //in message types
 #define MESSAGE_ROOM_ACT 76//'L' ask for add or edit rooms
 #define MESSAGE_MOVE 77//'M'  ask for change status
