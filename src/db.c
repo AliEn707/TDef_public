@@ -111,7 +111,7 @@ int dbGetPlayer(player_info * pl, char * n, int t){
 		//dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, time_t timestamp)
 		char cmp[50];
 		sprintf(cmp,"player_id in (select id from tdef_players where user_id = %d)", user_id);
-		dbSelectFieldWhereNewer("tdef_player_auths au", "au.*", "", cmp, "", time(0)-5);
+		dbSelectFieldWhereNewer("tdef_player_auths au", "au.*", "", cmp, "", time(0)-50);
 		if (pgRows()>0){
 			int player_id;
 			data=pgNumber("player_id");
