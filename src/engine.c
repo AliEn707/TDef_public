@@ -62,17 +62,19 @@ void printLog(const char* format, ...) {
 	FILE *f;
 	va_list argptr;
 	va_start(argptr, format);
-	if (config.debug)
-		vfprintf(stdout, format, argptr);
+		if (config.debug)
+			vfprintf(stdout, format, argptr);
+	va_end(argptr);
 	if (config.log_file){
-		t_semop(t_sem.log,&sem[0],1);
-			if ((f=fopen(config.log_file, "a"))!=0){
-				vfprintf(f, format, argptr);
-				fclose(f);
-			}
-		t_semop(t_sem.log,&sem[1],1);
+			t_semop(t_sem.log,&sem[0],1);
+				va_start(argptr, format);
+					if ((f=fopen(config.log_file, "a"))!=0){
+						vfprintf(f, format, argptr);
+						fclose(f);
+					}
+				va_end(argptr);
+			t_semop(t_sem.log,&sem[1],1);
 	}
-	va_end(argptr);	
 }
 
 //time passed after previous call of function
