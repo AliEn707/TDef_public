@@ -30,6 +30,7 @@ static inline int proceedUpdaterMessage(worklist* w,char msg_type){
 			for(i=0;i<rows;i++){
 				strcpy(map_names[i].str,pgValue(i,name));
 			}
+			dbClear();
 		t_semop(t_sem.db,&sem[1],1);
 		for(i=0;i<rows;i++){
 			len=strlen(map_names[i].str);
@@ -50,6 +51,7 @@ static inline int proceedUpdaterMessage(worklist* w,char msg_type){
 						sendData(w->sock,&len,sizeof(len));
 						sendData(w->sock,t_t,len);
 					}
+					dbClear();
 				t_semop(t_sem.db,&sem[1],1);
 			}
 			len=0;
@@ -72,6 +74,7 @@ static inline int proceedUpdaterMessage(worklist* w,char msg_type){
 		t_semop(t_sem.db,&sem[0],1);
 			dbSelectFieldNewer(TYPES[(int)msg_type], "id", timestamp);
 			rows=pgRows();
+			dbClear();
 		t_semop(t_sem.db,&sem[1],1);
 		if (rows!=0){
 			t_semop(t_sem.db,&sem[0],1);
@@ -94,6 +97,7 @@ static inline int proceedUpdaterMessage(worklist* w,char msg_type){
 					sendData(w->sock,&len,sizeof(len));
 					sendData(w->sock,t_t,len);
 				}
+				dbClear();
 			t_semop(t_sem.db,&sem[1],1);
 		}
 		len=0;

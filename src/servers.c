@@ -56,6 +56,7 @@ int serversLoad(){
 			s->port=atoi(value);
 			s->id=id;
 		}
+		dbClear();
 	t_semop(t_sem.db,&sem[1],1);
 */	
 	printf("Servers updated\n");

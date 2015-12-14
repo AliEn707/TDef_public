@@ -1,5 +1,6 @@
 
 int dbConnect(char* config);
+void dbClear();
 
 player_info * dbAuth(worklist * client);
 
