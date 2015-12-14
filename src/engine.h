@@ -34,8 +34,12 @@ void syncTime(struct timeval t, unsigned int time);
 	}\
 val;})
 
+
 #else
 
 #define biteSwap(a) a
 
 #endif
+
+//example of usage #define func(a, c) ({typeof(a) b=biteSwap(a); c(&b);})
+//#define func(a) ({typeof(a) b=biteSwap(a); original_func(&b);})
