@@ -9,6 +9,7 @@
 ╚══════════════════════════════════════════════════════════════╝
 */
 
+#define HTTP_ANSWER "HTTP/1.1 200 OK\r\nContent-Type: text/xml; charset=utf-8\r\nContent-Length: 88\r\nConnection: close\r\n\r\n"
 #define PRIVATE_POLICY "<cross-domain-policy><allow-access-from domain=\"*\" to-ports=\"*\" /></cross-domain-policy>"
 
 
@@ -63,6 +64,8 @@ void * threadListener(void * arg){
 		FD_ZERO(&read_fds);
 		FD_SET(config.serverworker.sock, &read_fds);
 		FD_SET(config.player.sock, &read_fds);
+
+		syncTPS(timePassed(&tv),TPS);
 		
 		if (select(max_fd+1, &read_fds, 0, 0, 0)){
 			if (FD_ISSET(config.serverworker.sock, &read_fds)){
@@ -91,44 +94,44 @@ void * threadListener(void * arg){
 				
 				memset(t_t,0,sizeof(t_t));
 				recvData(sock,t_t,13);//get 13 bytes
-				if (strstr(t_t,"<policy")!=0){
+				if (strstr(t_t,"<policy")!=0){//flash private policy
 					_sendData(sock,PRIVATE_POLICY,sizeof(PRIVATE_POLICY));
 					close(sock);
+				}else if (strstr(t_t,"crossdom")!=0){//java private policy
+					_sendData(sock,HTTP_ANSWER,sizeof(HTTP_ANSWER)-1);
+					_sendData(sock,PRIVATE_POLICY,sizeof(PRIVATE_POLICY)-1);
+					close(sock);
 				}else{
-					do{
-						char str[300];
-						printf("player connected: %s\n",t_t);
-						if (strcmp(t_t, "FlashHello^_^")==0){
-							printf("connect using Flash\n");
-							sprintf(str,"'connected using Flash connector'");//add another info
-						}else if (strcmp(t_t, "JavaApplet^_^")==0){
-							printf("connect using Java\n");
-							sprintf(str,"'connected using Java connector'");
-						}else{
+					char str[300];
+					printf("player connected: %s\n",t_t);
+					if (strcmp(t_t, "FlashHello^_^")==0){
+						printf("connect using Flash\n");
+						sprintf(str,"'connected using Flash connector'");//add another info
+					}else if (strcmp(t_t, "JavaApplet^_^")==0){
+						printf("connect using Java\n");
+						sprintf(str,"'connected using Java connector'");
+					}else{
+						close(sock);
+						continue;
+					}
+					t_semop(t_sem.db,&sem[0],1);
+						dbLog(0, "'connect'", 0, "NULL", 0, str);
+					t_semop(t_sem.db,&sem[1],1);
+	//				printf("semval= %d\n",t_semctl(config.watcher.sem,1,GETVAL));
+					t_semop(t_sem.watcher,&sem[0],1);
+						config.watcher.client_num++;
+						//add client to watcher
+						if ((tmp=worklistAdd(&config.watcher.client,0))==0){
+							perror("worklistAdd Listener");
 							close(sock);
-							break;
+						} else {
+							tmp->sock=sock;
+	//						printf("added to watcher\n");
 						}
-						t_semop(t_sem.db,&sem[0],1);
-							dbLog(0, "'connect'", 0, "NULL", 0, str);
-						t_semop(t_sem.db,&sem[1],1);
-		//				printf("semval= %d\n",t_semctl(config.watcher.sem,1,GETVAL));
-						t_semop(t_sem.watcher,&sem[0],1);
-							config.watcher.client_num++;
-							//add client to watcher
-							if ((tmp=worklistAdd(&config.watcher.client,0))==0){
-								perror("worklistAdd Listener");
-								close(sock);
-							} else {
-								tmp->sock=sock;
-		//						printf("added to watcher\n");
-							}
-						t_semop(t_sem.watcher,&sem[1],1);
-					}while(0);
-					sleep(0);
+					t_semop(t_sem.watcher,&sem[1],1);
 				}
 			}
 		}
-		syncTPS(timePassed(&tv),TPS);
 //		syncTime(*t,time);
 	}
 	printf("close Listener\n");

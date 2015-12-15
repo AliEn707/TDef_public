@@ -21,6 +21,10 @@ int dbConnect(char* config){
 	return pgConnect(data);	
 }
 
+//clear query
+void dbClear(){
+	pgClear();
+}
 
 //check player auth and create player_info struct or ret 0
 player_info * dbAuth(worklist * client){
@@ -103,36 +107,37 @@ int dbGetPlayer(player_info * pl, char * n, int t){
 	int user_id;
 	sprintf(name,"'%s'",n);
 	t_semop(t_sem.db,&sem[0],1);
-	dbSelectFieldWhere("users", "id", "email", "=", name);
-	if (pgRows()>0){
-		int data=pgNumber("id");
-		user_id=atoi(pgValue(0,data));
-		//select au.* from tdef_player_auths au where ( player_id in (select id from tdef_players pl where user_id = id) ); 
-		//dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, time_t timestamp)
-		char cmp[50];
-		sprintf(cmp,"player_id in (select id from tdef_players where user_id = %d)", user_id);
-		dbSelectFieldWhereNewer("tdef_player_auths au", "au.*", "", cmp, "", time(0)-50);
+		dbSelectFieldWhere("users", "id", "email", "=", name);
 		if (pgRows()>0){
-			int player_id;
-			data=pgNumber("player_id");
-			//set player id
-			player_id=atoi(pgValue(0,data));
-			data=pgNumber("token");
-			if (t==atoi(pgValue(0,data))){
-				//remove auth entry
-				dbUpdateStart("tdef_player_auths");
-				dbUpdateValue("token","NULL");
-				sprintf(cmp,"(player_id = %d)", pl->id);
-				dbUpdateEnd(cmp, 1);
-				
-				//set player properties
-				pl->id=player_id;
-				//add another values
+			int data=pgNumber("id");
+			user_id=atoi(pgValue(0,data));
+			//select au.* from tdef_player_auths au where ( player_id in (select id from tdef_players pl where user_id = id) ); 
+			//dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, time_t timestamp)
+			char cmp[50];
+			sprintf(cmp,"player_id in (select id from tdef_players where user_id = %d)", user_id);
+			dbClear();
+			dbSelectFieldWhereNewer("tdef_player_auths au", "au.*", "", cmp, "", time(0)-50);
+			if (pgRows()>0){
+				int player_id;
+				data=pgNumber("player_id");
+				//set player id
+				player_id=atoi(pgValue(0,data));
+				data=pgNumber("token");
+				if (t==atoi(pgValue(0,data))){
+					//remove auth entry
+					dbUpdateStart("tdef_player_auths");
+					dbUpdateValue("token","NULL");
+					sprintf(cmp,"(player_id = %d)", pl->id);
+					dbUpdateEnd(cmp, 1);
+					//set player properties
+					pl->id=player_id;
+					//add another values
+				}
+				//write to log
+				dbLog(player_id, "'login'", 0, "NULL", 0, (pl->id==0 ? "'login error'" : "'login success'") );
 			}
-			//write to log
-			dbLog(player_id, "'login'", 0, "NULL", 0, (pl->id==0 ? "'login error'" : "'login success'") );
 		}
-	}
+		dbClear();
 	t_semop(t_sem.db,&sem[1],1);
 	return 0;
 }
@@ -273,7 +278,9 @@ int dbInsert(char* table, char * f, char * v){
 	sprintf(fields,"%s, created_at, updated_at", f);
 	sprintf(values,"%s, %s, %s", v, dbTime(time(0)), dbTime(time(0)));
 	sprintf(str,"INSERT INTO %s ( %s ) VALUES ( %s );", table, fields, values);
-	return pgExec(str);	
+	int i=pgExec(str);
+	dbClear();
+	return i;	
 }
 
 //inserting for more complex data
@@ -297,7 +304,9 @@ int dbInsertEnd(){
 	dbInsertValue("created_at", dbTime(time(0)));
 	dbInsertValue("updated_at", dbTime(time(0)));
 	sprintf(str,"INSERT INTO %s ( %s ) VALUES ( %s );", qeueing.table, qeueing.tmp, qeueing.values);
-	return pgExec(str);	
+	int i=pgExec(str);
+	dbClear();
+	return i;	
 }
 
 
