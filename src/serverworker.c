@@ -132,7 +132,8 @@ static inline int proceedServerMessage(worklist* w,char msg_type){
 		//push it to updater
 		worklist * tmp;
 		t_semop(t_sem.updater,&sem[0],1);
-			//add client to serverworker
+			//add client to updater
+			printf("pass task to updater\n");
 			tmp=worklistAdd(&config.updater.task,0);
 			tmp->sock=sock;
 		t_semop(t_sem.updater,&sem[1],1);
@@ -182,10 +183,10 @@ static inline int proceedServerMessage(worklist* w,char msg_type){
 		t_semop(t_sem.room,&sem[1],1);
 
 //		printf("get n set r status %d\n",r_r->status);
-		return 0;
+		return 0; //check may be need to remove
 	}
 //	printf("end of mes recv\n");
-	return 0;
+	return 0; //check may be need to remove
 }
 
 static inline int recvServerData(worklist* w){

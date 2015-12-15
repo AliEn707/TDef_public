@@ -1,6 +1,8 @@
+#include "postgres.h"
+typedef int dbUpdate_t;
 
 int dbConnect(char* config);
-void dbClear();
+void dbClear(dbQuery_t id);
 
 player_info * dbAuth(worklist * client);
 
@@ -16,26 +18,26 @@ time_t dbRawTime(char* t);
 #define dbError() pgError()
 
 //selects
-int dbSelect(char* table);
-int dbSelectWhereUni(char* table, char* fields, char* cmp);
-int dbSelectWhere(char* table, char* field, char* cmp, char* value);
-int dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, time_t timestamp);
-int dbSelectField(char* table, char* field);
-int dbSelectFieldWhere(char* table, char* sel, char* field, char* cmp, char* value);
-int dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, time_t timestamp);
-int dbSelectNewer(char* table, time_t timestamp);
-int dbSelectFieldNewer(char* table,char* field, time_t timestamp);
+dbQuery_t dbSelect(char* table);
+dbQuery_t dbSelectWhereUni(char* table, char* fields, char* cmp);
+dbQuery_t dbSelectWhere(char* table, char* field, char* cmp, char* value);
+dbQuery_t dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, time_t timestamp);
+dbQuery_t dbSelectField(char* table, char* field);
+dbQuery_t dbSelectFieldWhere(char* table, char* sel, char* field, char* cmp, char* value);
+dbQuery_t dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, time_t timestamp);
+dbQuery_t dbSelectNewer(char* table, time_t timestamp);
+dbQuery_t dbSelectFieldNewer(char* table,char* field, time_t timestamp);
 
-int dbUpdateStart(char* table);
-int dbUpdateValue(char *field, char *value);
-int dbUpdateEnd(char *cmp, int touch);
+dbUpdate_t dbUpdateStart(char* table);
+void dbUpdateValue(dbUpdate_t, char *field, char *value);
+void dbUpdateEnd(dbUpdate_t, char *cmp, int touch);
 
 //one line insert
-int dbInsert(char* table, char * fields, char * values);
+void dbInsert(char* table, char * fields, char * values);
 //more lines insert
-int dbInsertStart(char* table);
-int dbInsertValue(char *field, char *value);
-int dbInsertEnd();
+dbUpdate_t dbInsertStart(char* table);
+void dbInsertValue(dbUpdate_t, char *field, char *value);
+void dbInsertEnd(dbUpdate_t);
 
 //add log
-int dbLog(int player_id, char *action, int object_id, char *object_type, int value, char* other);
+void dbLog(int player_id, char *action, int object_id, char *object_type, int value, char* other);

@@ -21,38 +21,40 @@ static inline int proceedUpdaterMessage(worklist* w,char msg_type){
 	int rows;
 	long long int timestamp;
 	if (msg_type==MESSAGE_UPDATE_MAPS){
-		t_semop(t_sem.db,&sem[0],1);
-			dbSelectFieldWhere("tdef_maps","name","completed","=","'t'");
-			int name=pgNumber("name");
-			rows=pgRows();
-			map_names=malloc(rows*sizeof(*map_names));
-			memset(map_names,0,rows*sizeof(*map_names));
-			for(i=0;i<rows;i++){
-				strcpy(map_names[i].str,pgValue(i,name));
-			}
-			dbClear();
-		t_semop(t_sem.db,&sem[1],1);
+		printf("update maps\n");
+//		t_semop(t_sem.db,&sem[0],1);
+		dbQuery_t query;
+		query=dbSelectFieldWhere("tdef_maps","name","completed","=","'t'");
+		int name=pgNumber(query, "name");
+		rows=pgRows(query);
+		map_names=malloc(rows*sizeof(*map_names));
+		memset(map_names,0,rows*sizeof(*map_names));
+		for(i=0;i<rows;i++){
+			strcpy(map_names[i].str,pgValue(query, i,name));
+		}
+		dbClear(query);
+//		t_semop(t_sem.db,&sem[1],1);
 		for(i=0;i<rows;i++){
 			len=strlen(map_names[i].str);
 			sendData(w->sock,&len,sizeof(len));
 			sendData(w->sock,map_names[i].str,len);
 			if(recvData(w->sock,&timestamp,sizeof(timestamp))>0){
 				sprintf(t_t,"'%s'",map_names[i].str);
-				t_semop(t_sem.db,&sem[0],1);
-					dbSelectWhereNewer("tdef_maps","name","=",t_t,timestamp);
-					if (pgRows()>0){
-						int data=pgNumber("data");
-						value=pgValue(0,data);
-						len=strlen(value);
-						sendData(w->sock,&len,sizeof(len));
-						sendData(w->sock,value,len);
-						sprintf(t_t,"\n");
-						len=strlen(t_t);
-						sendData(w->sock,&len,sizeof(len));
-						sendData(w->sock,t_t,len);
-					}
-					dbClear();
-				t_semop(t_sem.db,&sem[1],1);
+//				t_semop(t_sem.db,&sem[0],1);
+				query=dbSelectWhereNewer("tdef_maps","name","=",t_t,timestamp);
+				if (pgRows(query)>0){
+					int data=pgNumber(query, "data");
+					value=pgValue(query, 0,data);
+					len=strlen(value);
+					sendData(w->sock,&len,sizeof(len));
+					sendData(w->sock,value,len);
+					sprintf(t_t,"\n");
+					len=strlen(t_t);
+					sendData(w->sock,&len,sizeof(len));
+					sendData(w->sock,t_t,len);
+				}
+				dbClear(query);
+//				t_semop(t_sem.db,&sem[1],1);
 			}
 			len=0;
 			sendData(w->sock,&len,sizeof(len));
@@ -70,35 +72,37 @@ static inline int proceedUpdaterMessage(worklist* w,char msg_type){
 			[MESSAGE_UPDATE_TOWER_TYPES]="tdef_type_towers",
 			[MESSAGE_UPDATE_BULLET_TYPES]="tdef_type_bullets"
 		};
+		printf("update %s\n", TYPES[(int)msg_type]);
+		dbQuery_t query;
 		recvData(w->sock,&timestamp,sizeof(timestamp));
-		t_semop(t_sem.db,&sem[0],1);
-			dbSelectFieldNewer(TYPES[(int)msg_type], "id", timestamp);
-			rows=pgRows();
-			dbClear();
-		t_semop(t_sem.db,&sem[1],1);
+//		t_semop(t_sem.db,&sem[0],1);
+		query=dbSelectFieldNewer(TYPES[(int)msg_type], "id", timestamp);
+		rows=pgRows(query);
+		dbClear(query);
+//		t_semop(t_sem.db,&sem[1],1);
 		if (rows!=0){
-			t_semop(t_sem.db,&sem[0],1);
-				dbSelect(TYPES[(int)msg_type]);
-				rows=pgRows();
-				int params=pgNumber("params");
-				int id=pgNumber("id");
-				for(i=0;i<rows;i++){
-					sprintf(t_t,"id %s\n",pgValue(i,id));
-					len=strlen(t_t);
-					sendData(w->sock,&len,sizeof(len));
-					sendData(w->sock,t_t,len);
-					value=pgValue(i,params);
-					len=strlen(value);
-					sendData(w->sock,&len,sizeof(len));
-					sendData(w->sock,value,len);
-					
-					sprintf(t_t,"//- %s\n\n",pgValue(i,id));
-					len=strlen(t_t);
-					sendData(w->sock,&len,sizeof(len));
-					sendData(w->sock,t_t,len);
-				}
-				dbClear();
-			t_semop(t_sem.db,&sem[1],1);
+//			t_semop(t_sem.db,&sem[0],1);
+			query=dbSelect(TYPES[(int)msg_type]);
+			rows=pgRows(query);
+			int params=pgNumber(query,"params");
+			int id=pgNumber(query,"id");
+			for(i=0;i<rows;i++){
+				sprintf(t_t,"id %s\n",pgValue(query, i, id));
+				len=strlen(t_t);
+				sendData(w->sock,&len,sizeof(len));
+				sendData(w->sock,t_t,len);
+				value=pgValue(query, i, params);
+				len=strlen(value);
+				sendData(w->sock,&len,sizeof(len));
+				sendData(w->sock,value,len);
+				
+				sprintf(t_t,"//- %s\n\n",pgValue(query, i, id));
+				len=strlen(t_t);
+				sendData(w->sock,&len,sizeof(len));
+				sendData(w->sock,t_t,len);
+			}
+			dbClear(query);
+//			t_semop(t_sem.db,&sem[1],1);
 		}
 		len=0;
 		sendData(w->sock,&len,sizeof(len));
@@ -157,7 +161,7 @@ void * threadUpdater(void * arg){
 		//check tasks
 		t_semop(t_sem.updater,&sem[0],1);
 			//do actions
-			worklistForEachRemove(&config.sheduller.task,proceed,0);
+			worklistForEachRemove(&config.updater.task,proceed,0);
 		t_semop(t_sem.updater,&sem[1],1);
 		
 		syncTPS(timePassed(&tv),TPS);

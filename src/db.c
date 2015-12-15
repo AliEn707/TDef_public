@@ -22,8 +22,8 @@ int dbConnect(char* config){
 }
 
 //clear query
-void dbClear(){
-	pgClear();
+void dbClear(dbQuery_t id){
+	pgClear(id);
 }
 
 //check player auth and create player_info struct or ret 0
@@ -105,40 +105,42 @@ int dbGetPlayer(player_info * pl, char * n, int t){
 	//dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, time_t timestamp)
 	char name[20];
 	int user_id;
+	dbQuery_t query1=0, query2=0;
 	sprintf(name,"'%s'",n);
-	t_semop(t_sem.db,&sem[0],1);
-		dbSelectFieldWhere("users", "id", "email", "=", name);
-		if (pgRows()>0){
-			int data=pgNumber("id");
-			user_id=atoi(pgValue(0,data));
-			//select au.* from tdef_player_auths au where ( player_id in (select id from tdef_players pl where user_id = id) ); 
-			//dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, time_t timestamp)
-			char cmp[50];
-			sprintf(cmp,"player_id in (select id from tdef_players where user_id = %d)", user_id);
-			dbClear();
-			dbSelectFieldWhereNewer("tdef_player_auths au", "au.*", "", cmp, "", time(0)-50);
-			if (pgRows()>0){
-				int player_id;
-				data=pgNumber("player_id");
-				//set player id
-				player_id=atoi(pgValue(0,data));
-				data=pgNumber("token");
-				if (t==atoi(pgValue(0,data))){
-					//remove auth entry
-					dbUpdateStart("tdef_player_auths");
-					dbUpdateValue("token","NULL");
-					sprintf(cmp,"(player_id = %d)", pl->id);
-					dbUpdateEnd(cmp, 1);
-					//set player properties
-					pl->id=player_id;
-					//add another values
-				}
-				//write to log
-				dbLog(player_id, "'login'", 0, "NULL", 0, (pl->id==0 ? "'login error'" : "'login success'") );
+//	t_semop(t_sem.db,&sem[0],1);
+	query1=dbSelectFieldWhere("users", "id", "email", "=", name);
+	if (pgRows(query1)>0){
+		int data=pgNumber(query1, "id");
+		user_id=atoi(pgValue(query1, 0,data));
+		//select au.* from tdef_player_auths au where ( player_id in (select id from tdef_players pl where user_id = id) ); 
+		//dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, time_t timestamp)
+		char cmp[50];
+		sprintf(cmp,"player_id in (select id from tdef_players where user_id = %d)", user_id);
+		query2=dbSelectFieldWhereNewer("tdef_player_auths au", "au.*", "", cmp, "", time(0)-50);
+		if (pgRows(query2)>0){
+			int player_id;
+			data=pgNumber(query2, "player_id");
+			//set player id
+			player_id=atoi(pgValue(query2, 0,data));
+			data=pgNumber(query2, "token");
+			if (t==atoi(pgValue(query2, 0,data))){
+				dbUpdate_t u_u;
+				//remove auth entry
+				u_u=dbUpdateStart("tdef_player_auths");
+				dbUpdateValue(u_u, "token","NULL");
+				sprintf(cmp,"(player_id = %d)", pl->id);
+				dbUpdateEnd(u_u, cmp, 1);
+				//set player properties
+				pl->id=player_id;
+				//add another values
 			}
+			//write to log
+			dbLog(player_id, "'login'", 0, "NULL", 0, (pl->id==0 ? "'login error'" : "'login success'") );
 		}
-		dbClear();
-	t_semop(t_sem.db,&sem[1],1);
+	}
+	dbClear(query1);
+	dbClear(query2);
+//	t_semop(t_sem.db,&sem[1],1);
 	return 0;
 }
 
@@ -197,138 +199,172 @@ time_t dbRawTime(char* s){
 }
 
 ///database selects 
-static char str[500];
 
-int dbSelect(char* table){
+dbQuery_t dbSelect(char* table){
+	char str[500];
 	sprintf(str,"SELECT * FROM %s;", table);
 	return pgExec(str);
 }
 
-int dbSelectWhereUni(char* table, char* fields, char* cmp){
+dbQuery_t dbSelectWhereUni(char* table, char* fields, char* cmp){
+	char str[500];
 	sprintf(str,"SELECT %s FROM %s where (%s);", fields, table, cmp);
 	return pgExec(str);
 }
 
-int dbSelectWhere(char* table, char* field, char* cmp, char* value){
+dbQuery_t dbSelectWhere(char* table, char* field, char* cmp, char* value){
+	char str[500];
 	sprintf(str,"SELECT * FROM %s WHERE (%s %s %s);", table, field, cmp, value);
 	return pgExec(str);
 }
 
-int dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, time_t timestamp){
+dbQuery_t dbSelectWhereNewer(char* table, char* field, char* cmp, char* value, time_t timestamp){
 //	printf("SELECT * FROM %s WHERE (%s %s %s and updated_at > '%s');\n", table, field,cmp,value, dbTime(timestamp)); //can be used for logging
+	char str[500];
 	sprintf(str,"SELECT * FROM %s WHERE (%s %s %s and updated_at > %s);", table, field,cmp,value, dbTime(timestamp));
 	return pgExec(str);
 }
 
-int dbSelectField(char* table, char* field){
+dbQuery_t dbSelectField(char* table, char* field){
+	char str[500];
 	sprintf(str,"SELECT %s FROM %s;", field, table);
 	return pgExec(str);
 }
 
-int dbSelectFieldWhere(char* table, char* sel, char* field, char* cmp, char* value){
+dbQuery_t dbSelectFieldWhere(char* table, char* sel, char* field, char* cmp, char* value){
+	char str[500];
 	sprintf(str,"SELECT %s FROM %s WHERE (%s %s %s);", sel, table, field, cmp, value);
 	return pgExec(str);
 }
 
-int dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, time_t timestamp){
+dbQuery_t dbSelectFieldWhereNewer(char* table, char* sel, char* field, char* cmp, char* value, time_t timestamp){
+	char str[500];
 	sprintf(str,"SELECT %s FROM %s WHERE (%s %s %s and updated_at > %s);", sel, table, field, cmp, value, dbTime(timestamp));
 	return pgExec(str);
 }
 
-int dbSelectNewer(char* table, time_t timestamp){
+dbQuery_t dbSelectNewer(char* table, time_t timestamp){
+	char str[500];
 	sprintf(str,"SELECT * FROM %s WHERE updated_at > %s;", table, dbTime(timestamp));
 	return pgExec(str);
 }
 
-int dbSelectFieldNewer(char* table,char* field, time_t timestamp){
+dbQuery_t dbSelectFieldNewer(char* table,char* field, time_t timestamp){
+	char str[500];
 	sprintf(str,"SELECT %s FROM %s WHERE updated_at > %s;", field, table, dbTime(timestamp));
 	return pgExec(str);
 }
 
+#define MAX_QEUEING 20
 static struct {
+	short used;
 	char table[50];
 	char values[2000];
 	char tmp[2000];
-} qeueing;
+} qeueing[MAX_QEUEING];
+
+static inline dbUpdate_t getAccess(){
+	dbUpdate_t id=0;
+	int i;
+	do {
+		t_semop(t_sem.db,&sem[0],1);
+			for(i=0;i<MAX_QEUEING;i++)
+				if (qeueing[i].used==0){
+					id=i;
+				}
+		t_semop(t_sem.db,&sem[1],1);
+		if (id!=0)
+			break;
+		usleep(30000);
+	}while(1);
+	return id;
+}
+
+static inline void dropAccess(dbUpdate_t id){
+	t_semop(t_sem.db,&sem[0],1);
+		qeueing[id].used=0;
+	t_semop(t_sem.db,&sem[1],1);
+}
+
 
 //updating
-int dbUpdateStart(char* table){
-	sprintf(qeueing.table,"%s", table);
-	qeueing.values[0]=0;
-	return 0;	
+dbUpdate_t dbUpdateStart(char* table){
+	dbUpdate_t id=getAccess();
+	sprintf(qeueing[id].table,"%s", table);
+	qeueing[id].values[0]=0;
+	return id;	
 }
 
-int dbUpdateValue(char *field, char *value){
-	sprintf(qeueing.tmp,"%s%s %s = %s",qeueing.values, qeueing.values[0]!=0? "," : "",field,value);
-	sprintf(qeueing.values,"%s", qeueing.tmp);
-	return 0;	
+void dbUpdateValue(dbUpdate_t id, char *field, char *value){
+	sprintf(qeueing[id].tmp,"%s%s %s = %s",qeueing[id].values, qeueing[id].values[0]!=0? "," : "",field,value);
+	sprintf(qeueing[id].values,"%s", qeueing[id].tmp);
 }
 
-int dbUpdateEnd(char* cmp, int touch){
+void dbUpdateEnd(dbUpdate_t id, char* cmp, int touch){
+	char str[500];
 	if (touch)
-		dbUpdateValue("updated_at", dbTime(time(0)));
-	sprintf(str,"UPDATE %s SET  %s  WHERE %s;", qeueing.table, qeueing.values, cmp);
-	return pgExec(str);	
+		dbUpdateValue(id, "updated_at", dbTime(time(0)));
+	sprintf(str,"UPDATE %s SET  %s  WHERE %s;", qeueing[id].table, qeueing[id].values, cmp);
+	pgClear(pgExec(str));	
+	dropAccess(id);
 }
 
 //inserting
 //one line inserting
-int dbInsert(char* table, char * f, char * v){
-	static char fields[200], values[200];
+void dbInsert(char* table, char * f, char * v){ //f- fields : "qq,ww,ee", v - values "''qq', 22, 46"
+	char fields[200], values[200], str[500];
 	sprintf(fields,"%s, created_at, updated_at", f);
 	sprintf(values,"%s, %s, %s", v, dbTime(time(0)), dbTime(time(0)));
 	sprintf(str,"INSERT INTO %s ( %s ) VALUES ( %s );", table, fields, values);
-	int i=pgExec(str);
-	dbClear();
-	return i;	
+	dbClear(pgExec(str));
 }
 
 //inserting for more complex data
-int dbInsertStart(char* table){
-	sprintf(qeueing.table,"%s", table);
-	qeueing.values[0]=0;
-	qeueing.tmp[0]=0;
-	return 0;	
+dbUpdate_t dbInsertStart(char* table){
+	dbUpdate_t id=getAccess();
+	sprintf(qeueing[id].table,"%s", table);
+	qeueing[id].values[0]=0;
+	qeueing[id].tmp[0]=0;
+	return id;	
 }
 
-int dbInsertValue(char *field, char *value){
+void dbInsertValue(dbUpdate_t id, char *field, char *value){
 	static char tmp[200];
-	sprintf(tmp,"%s%s %s",qeueing.tmp, qeueing.tmp[0]!=0? "," : "",field);
-	sprintf(qeueing.tmp,"%s", tmp);
-	sprintf(tmp,"%s%s %s",qeueing.values, qeueing.values[0]!=0? "," : "",value);
-	sprintf(qeueing.values,"%s", tmp);
-	return 0;	
+	sprintf(tmp,"%s%s %s",qeueing[id].tmp, qeueing[id].tmp[0]!=0? "," : "",field);
+	sprintf(qeueing[id].tmp,"%s", tmp);
+	sprintf(tmp,"%s%s %s",qeueing[id].values, qeueing[id].values[0]!=0? "," : "",value);
+	sprintf(qeueing[id].values,"%s", tmp);
 }
 
-int dbInsertEnd(){
-	dbInsertValue("created_at", dbTime(time(0)));
-	dbInsertValue("updated_at", dbTime(time(0)));
-	sprintf(str,"INSERT INTO %s ( %s ) VALUES ( %s );", qeueing.table, qeueing.tmp, qeueing.values);
-	int i=pgExec(str);
-	dbClear();
-	return i;	
+void dbInsertEnd(dbUpdate_t id){
+	char str[500];
+	dbInsertValue(id, "created_at", dbTime(time(0)));
+	dbInsertValue(id, "updated_at", dbTime(time(0)));
+	sprintf(str,"INSERT INTO %s ( %s ) VALUES ( %s );", qeueing[id].table, qeueing[id].tmp, qeueing[id].values);
+	dbClear(pgExec(str));
 }
 
 
-int dbLog(int player_id, char *action, int object_id, char *object_type, int value, char* other){
-	static char tmp[50];
-	dbInsertStart("tdef_logs");
-	dbInsertValue("action", action);
+void dbLog(int player_id, char *action, int object_id, char *object_type, int value, char* other){
+	char tmp[50];
+	dbUpdate_t id;
+	id=dbInsertStart("tdef_logs");
+	dbInsertValue(id, "action", action);
 	if (player_id)
 		sprintf(tmp,"%d", player_id);
 	else
 		sprintf(tmp,"NULL");
-	dbInsertValue("player_id", tmp);
+	dbInsertValue(id, "player_id", tmp);
 	if (object_id)
 		sprintf(tmp,"%d", object_id);
 	else
 		sprintf(tmp,"NULL");
-	dbInsertValue("logable_id", tmp);
-	dbInsertValue("logable_type", object_type);
+	dbInsertValue(id, "logable_id", tmp);
+	dbInsertValue(id, "logable_type", object_type);
 	sprintf(tmp,"%d", value);
-	dbInsertValue("value", tmp);
-	dbInsertValue("other", other);
+	dbInsertValue(id, "value", tmp);
+	dbInsertValue(id, "other", other);
 	
-	return dbInsertEnd();	
+	dbInsertEnd(id);	
 }
 

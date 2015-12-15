@@ -1,6 +1,6 @@
-﻿#include <libpq-fe.h>
-#include <stdio.h>
+﻿#include <stdio.h>
 
+#include "main.h"
 #include "postgres.h"
 
 /*
@@ -14,11 +14,34 @@
 
 static PGconn *connection=0;
 
-static PGresult * last_result=0; //change to array of results
-
+static dbConnection connections[DB_CONNECTIONS];
 //char data[]="host=localhost\ndbname=wss_devel\nuser=dbuser\npassword=passwd";
 
+static inline dbQuery_t getAccess(){
+	dbQuery_t id=0;
+	int i;
+	do {
+		t_semop(t_sem.db,&sem[0],1);
+			for(i=1;i<DB_CONNECTIONS;i++)
+				if (connections[i].used==0){
+					id=i;
+				}
+		t_semop(t_sem.db,&sem[1],1);
+		if (id!=0)
+			break;
+		usleep(30000);
+	}while(1);
+	return id;
+}
+
+static inline void dropAccess(dbQuery_t id){
+	t_semop(t_sem.db,&sem[0],1);
+		connections[id].used=0;
+	t_semop(t_sem.db,&sem[1],1);
+}
+
 int pgConnect(char * cparams){
+	memset(&connections, 0, sizeof(connections));
 	connection=PQconnectdb(cparams);
 	return PQstatus(connection); 
 }
@@ -38,38 +61,39 @@ int pgCheck(){
 	return PQstatus(connection);
 }
 
-void pgClear(){
-	if (connection==0)
+void pgClear(dbQuery_t id){
+	if (id==0)
 		return;
-	if (last_result!=0) 
-		PQclear(last_result);
-	last_result=0;
+	if (connections[id].query!=0)
+			PQclear(connections[id].query);
+		connections[id].query=0;
+	dropAccess(id);
 }
 
-int pgExec(char * query){
+dbQuery_t pgExec(char * query){
+	dbQuery_t id=getAccess();
 	if (connection==0)
 		return 1;
-	pgClear();
-	last_result= PQexec(connection,query);
+	connections[id].query= PQexec(connection,query);
 	pgErrorPrint();
-	return PQresultStatus(last_result);
+	return id;
 }//must be cleared by PQclear
 
 
-int pgRows(){
+int pgRows(dbQuery_t id){
 	if (connection==0)
 		return 0;
-	if (last_result)
-		return PQntuples(last_result);
+	if (connections[id].query)
+		return PQntuples(connections[id].query);
 	else
 		return 0;
 }
 
-int pgColumns(){
+int pgColumns(dbQuery_t id){
 	if (connection==0)
 		return 0;
-	if (last_result)
-		return PQnfields(last_result);
+	if (connections[id].query)
+		return PQnfields(connections[id].query);
 	else
 		return 0;
 }
@@ -84,22 +108,22 @@ void pgErrorPrint(){
 		printf("DB Error: %s\n", PQerrorMessage(connection)); //change to log print
 }
 
-int pgNumber(char * name){
+int pgNumber(dbQuery_t id, char * name){
 	if (connection==0)
 		return -1;
-	return PQfnumber(last_result,name);
+	return PQfnumber(connections[id].query,name);
 }
 
-int pgSize(int row, int col){
+int pgSize(dbQuery_t id, int row, int col){
 	if (connection==0)
 		return 0;
-	return PQgetlength(last_result, row, col);
+	return PQgetlength(connections[id].query, row, col);
 }
 
-char *pgValue(int row, int col){
+char *pgValue(dbQuery_t id, int row, int col){
 	if (connection==0)
 		return "";
-	return PQgetvalue(last_result,row,col);
+	return PQgetvalue(connections[id].query,row,col);
 }
 
 
