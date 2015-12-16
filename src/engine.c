@@ -60,19 +60,22 @@ int recvData(int sock, void * buf, int size){
 
 void printLog(const char* format, ...) {
 	FILE *f;
+	char str[500];
+	char tstr[20]="";
+	time_t t=time(0);
+	strftime(tstr, sizeof(tstr), "%F %T", localtime(&t));
 	va_list argptr;
 	va_start(argptr, format);
-		if (config.debug)
-			vfprintf(stdout, format, argptr);
+		vsprintf(str, format, argptr);
 	va_end(argptr);
+	if (config.debug)
+		fprintf(stdout, "%s: %s", tstr, str);
 	if (config.log_file){
 			t_semop(t_sem.log,&sem[0],1);
-				va_start(argptr, format);
 					if ((f=fopen(config.log_file, "a"))!=0){
-						vfprintf(f, format, argptr);
+						fprintf(f, "%s: %s", tstr, str);
 						fclose(f);
 					}
-				va_end(argptr);
 			t_semop(t_sem.log,&sem[1],1);
 	}
 }
