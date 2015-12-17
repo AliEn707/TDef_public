@@ -3,7 +3,7 @@ int recvData(int sock, void * buf, int size);
 int _sendData(int sock, void * buf, int size);
 
 void printLog(const char* format, ...);
-#define printf printLog
+#define printf(format, ...) printLog(format, ## __VA_ARGS__)
 #define perror(str) printLog("Error: %s\n",str)
 
 int timePassed(struct timeval * t);
