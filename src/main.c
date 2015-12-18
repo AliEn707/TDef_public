@@ -20,13 +20,12 @@ He helps us in this not simple work.
 
 
 int parseArgv(int argc,char * argv[]){
+	#include "help.text.h" 
 	int i, ret = 0;
 	for(i=0;i<argc;i++){
 		if (strcmp(argv[i],"-h")==0){
 			config.debug = 1;
-			printf( 
-				#include "help.text.h" 
-			);
+			printf( "%s", text);
 			exit(0);
 		}
 		if (strcmp(argv[i],"-debug")==0 || strcmp(argv[i],"-v")==0){
@@ -143,9 +142,6 @@ int core(){
 }
 
 int main(int argc, char* argv[]){
-#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__//__ORDER_LITTLE_ENDIAN__ 
-	printf("Big endian version not implement yet\n");
-#else
 	memset(&config,0,sizeof(config));
 	memset(&t_sem,0,sizeof(t_sem));
 	//set defaults
@@ -156,10 +152,12 @@ int main(int argc, char* argv[]){
 	
 	parseArgv(argc,argv);
 	
+	if (wrongByteOrder())
+		return 0;
+	
 	if (config.daemon==0)
 		core();
 	else
 		daemonize(config.pid_file,core);
-#endif
 	return 0;
 }

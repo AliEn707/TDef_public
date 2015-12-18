@@ -216,3 +216,29 @@ void syncTime(struct timeval *t, unsigned int time){
 	*t.tv_usec=end.tv_usec;
 }
 */
+
+int wrongByteOrder(){
+	char c4[4]={-92, 112, 69, 65};
+	float *f=(void*)c4, f0=12.34;
+	int *i=(void*)c4, i0=1095069860;
+	if (biteSwap(*i)!=i0){
+		perror("wrongByteOrder int");
+		return 1;
+	}
+	if (biteSwap(*f)!=f0){
+		perror("wrongByteOrder float");
+		return 1;
+	}
+	char c8[8]={-82, 71, -31, 122, 20, -82, 40, 64};
+	long long *l=(void*)c8, l0=4623136420479977390;
+	double *d=(void*)c8, d0=12.34;
+	if (biteSwap(*l)!=l0){
+		perror("wrongByteOrder long long");
+		return 1;
+	}
+	if (biteSwap(*d)!=d0){
+		perror("wrongByteOrder double");
+		return 1;
+	}
+	return 0;
+}
