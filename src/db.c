@@ -39,7 +39,7 @@ player_info * dbAuth(worklist * client){
 //		close(client->sock);
 		return 0;
 	}
-	//we malloc client need to avoid memmory leak
+	//we malloc client, need to avoid memory leak
 	do{
 //		client->id=rand();
 		//set client id  to 1 for future check if some errors will occur
