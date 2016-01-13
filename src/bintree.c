@@ -25,7 +25,7 @@ static int reverseInt(int x){
 
 int bintreeAdd(bintree* root,int key,void* data){
 	bintree* tmp=root;
-	int next;
+	int next, id=key;
 	if (key>MAX_KEY)
 		return 0;
 //	printDebug("add key %d\n",key);
@@ -44,7 +44,7 @@ int bintreeAdd(bintree* root,int key,void* data){
 	if (tmp->data!=0)
 		return 0;
 	tmp->data=data;
-	return 1;
+	return id;
 }
 
 void * bintreeGet(bintree* root, int key){
@@ -141,18 +141,22 @@ void bintreeErase(bintree * root,void (f)(void*v)){
 	root->next[1]=0;
 }
 
-static void _bintreeForEach(bintree * root, void(f)(int k, void *v, void *arg), void* arg, int key){
+static int _bintreeForEach(bintree * root, int(f)(int k, void *v, void *arg), void* arg, int key){
 	if (root==0)
-		return;
+		return 0;
 	int i;
+	int o;
 //	printf("\t %d %d %d\n", key,reverseInt(key)>>1,reverseInt(key));
-	for(i=0;i<2;i++)
-		_bintreeForEach(root->next[i],f,arg,(key<<1)+i);
 	if (root->data!=0)
-		f(reverseInt(key)>>1,root->data, arg);
+		if ((o=f(reverseInt(key)>>1,root->data, arg))!=0)
+			return o;
+	for(i=0;i<2;i++)
+		if ((o=_bintreeForEach(root->next[i],f,arg,(key<<1)+i))!=0)
+			return o;
+	return 0;
 }
 
-void bintreeForEach(bintree * root, void(f)(int k, void *v, void *arg), void *arg){
+void bintreeForEach(bintree * root, int(f)(int k, void *v, void *arg), void *arg){
 	if (root==0)
 		return;
 	_bintreeForEach(root,f,arg,1);
@@ -160,8 +164,9 @@ void bintreeForEach(bintree * root, void(f)(int k, void *v, void *arg), void *ar
 
 int bintreeSize(bintree * root){
 	int i=0;
-	void add(int k, void*v, void* arg){
+	int add(int k, void*v, void* arg){
 		i++;
+		return 0;
 	}
 	bintreeForEach(root,add, 0);
 	return i;
@@ -171,9 +176,10 @@ int bintreeSize(bintree * root){
 void** bintreeToArray(bintree * root){
 	void** o;
 	int i=bintreeSize(root);
-	void add(int k, void*v, void* arg){
+	int add(int k, void*v, void* arg){
 		o[i]=v;
 		i++;
+		return 0;
 	}
 	if ((o=malloc(sizeof(*o)*i))==0)
 		return 0;
@@ -185,8 +191,9 @@ void** bintreeToArray(bintree * root){
 //get clone of bintree
 bintree* bintreeClone(bintree * root){
 	bintree* o;
-	void add(int k, void*v, void* arg){
+	int add(int k, void*v, void* arg){
 		bintreeAdd(o,k,v);
+		return 0;
 	}
 	if ((o=malloc(sizeof(*o)))==0)
 		return 0;

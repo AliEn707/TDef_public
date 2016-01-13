@@ -4,6 +4,7 @@ typedef
 struct {
 	int id;
 	int timestamp; //change on $rooms change 
+	bintree rooms;
 	int $rooms;
 	char name[30];
 	char map[20];

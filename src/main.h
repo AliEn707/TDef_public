@@ -122,12 +122,12 @@ struct {
 	int port;
 	int server; //FIX ME
 	time_t timestamp;
-	int token;
+//	int token;
 	int bitmask;
 	short status;
 	float timer;
 	
-	int id;
+	int id; //used as token
 	int type;	//==id event
 } room;
 
