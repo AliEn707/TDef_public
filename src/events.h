@@ -4,6 +4,7 @@ typedef
 struct {
 	int id;
 	int timestamp; //change on $rooms change 
+	bintree rooms;
 	int $rooms;
 	char name[30];
 	char map[20];
@@ -23,6 +24,6 @@ int eventRoomAdd(int id);
 
 int eventRoomDel(int id);
 
-int eventForEach(void * p, int(f)(void*,event*));
+int eventForEach(void * p, int(f)(int k,void *v,void *arg));
 
 int eventErase();

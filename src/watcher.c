@@ -22,7 +22,7 @@ int getFreeWorker(){
 	return id;
 }
 
-
+///try to auth client
 int clientCheck(worklist * client){
 	int worker;
 	player_info * pl;
@@ -43,10 +43,10 @@ int clientCheck(worklist * client){
 			
 			//add player to config.player.tree
 			t_semop(t_sem.player,&sem[0],1);
-				if (bintreeAdd(&config.player.tree,pl->id,pl)==0){
+				if (bintreeAdd(&config.player.tree,pl->id,pl)==0){ //memory error or player already signed in 
 					perror("bintreeAdd player_info");
 //					close(client->sock);
-					pl->conn=FAIL;
+					client->id=0;
 				}else{
 					t_semop(t_sem.worker[worker],&sem[0],1);
 						config.worker[worker].client_num++;
@@ -77,7 +77,7 @@ int clientCheck(worklist * client){
 //		t_semop(pl->sem,&sem[1],1);
 		
 	}
-	return 0;
+	return client->id==0; //if true auth is OK
 }
 
 void * threadWatcher(void * arg){
@@ -89,7 +89,10 @@ void * threadWatcher(void * arg){
 		if (clientCheck(tmp)!=0){
 			//write log about disconnecting client
 			dbLog(tmp->id, "'logout'", 0, "NULL", 0, "'disconnected'" );
-			bintreeDel(&config.player.tree,tmp->id,realizePlayer);//tmp->data == pl
+			if (tmp->id!=0)
+				bintreeDel(&config.player.tree,tmp->id,realizePlayer);//tmp->data == pl
+			else
+				realizePlayer(tmp->data);
 			config.watcher.client_num--;
 			close(tmp->sock);
 			printf("watcher del client\n");

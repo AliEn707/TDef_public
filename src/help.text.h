@@ -1,4 +1,4 @@
-"\
+char text[]="\
 Usage:\n\
  -v or -debug - for show debug info\n\
  -s port - for server connections port (7001)\n\
@@ -9,4 +9,4 @@ Usage:\n\
  -i - for build info\n\
  -h - for this message\n\
 you cant combine keys\n\
-"
+";

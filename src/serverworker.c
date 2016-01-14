@@ -61,7 +61,8 @@ static int connSendRecv(char * hostname,int port, int token){
 }
 
 
-static int checkRoomStatus(room * r){
+static int checkRoomStatus(int k,void *v,void *arg){
+	room * r=v;
 	float Dt=0.1;
 //	struct {char type;int token;} message;
 //	memset(&message,0,sizeof(message));
@@ -83,7 +84,7 @@ static int checkRoomStatus(room * r){
 			for(i=1;i<=*$_$;i++)
 				if ((_$_=connSendRecv(serverGetById($_$[i]),
 							serversGetPortById($_$[i]),
-							r->token))>0){//we get port
+							r->id))>0){//we get port
 					//printf("_$_= %d\n",_$_);
 					if (_$_<0){//cant connect
 						serversSetFail($_$[i]);
@@ -107,13 +108,13 @@ static int checkRoomStatus(room * r){
 		//if (r->users==0){
 		room* _r;
 		//remove room
-		printf("r->  %d  %d %d\n",r->id,r->type,r->token);
+		printf("r->  %d  %d\n",r->id,r->type);
 		t_semop(t_sem.room,&sem[0],1);
-		_r=roomRem(r->type,r->id);
-		if (_r!=0){
-			printf("room removed\n");
-			free(_r);
-		}
+			_r=roomRem(r->id);
+			if (_r!=0){
+				printf("room removed\n");
+				free(_r);
+			}
 		t_semop(t_sem.room,&sem[1],1);
 		//}
 	}
@@ -123,7 +124,7 @@ static int checkRoomStatus(room * r){
 static inline int proceedServerMessage(worklist* w,char msg_type){
 //	char msg;
 	short l_l;
-	int token;
+	int id;
 	room * r_r;
 	event * e_e;
 	if (msg_type==MESSAGE_UPDATE){ //packet [mes(char) ..
@@ -141,7 +142,7 @@ static inline int proceedServerMessage(worklist* w,char msg_type){
 		return 1;
 	}
 	if (msg_type==MESSAGE_ROOM_STATUS){ //packet [mes(char)token(int)status(short)]
-		recvData(w->sock,&token,sizeof(token));
+		recvData(w->sock,&id,sizeof(id));
 		int port;
 		short status;
 //		printf("room\n");
@@ -151,7 +152,7 @@ static inline int proceedServerMessage(worklist* w,char msg_type){
 		recvData(w->sock,&status,sizeof(status)); //short
 //		printf("status -> %hd\n",room->status);
 		t_semop(t_sem.room,&sem[0],1); 
-		r_r=roomGetByToken(token);
+		r_r=roomGet(id);
 		if (r_r!=0){
 			r_r->port=port;
 			r_r->status=status;
@@ -168,9 +169,9 @@ static inline int proceedServerMessage(worklist* w,char msg_type){
 	}
 	if (msg_type==MESSAGE_ROOM_RESULT){ //packet [mes(char)token(int)playertoken(int) ..
 		printf("get room result\n");
-		recvData(w->sock,&token,sizeof(token));
+		recvData(w->sock,&id,sizeof(id));
 		t_semop(t_sem.room,&sem[0],1);
-		r_r=roomGetByToken(token);
+		r_r=roomGet(id);
 		//add another
 		if (r_r!=0){
 		//add some data

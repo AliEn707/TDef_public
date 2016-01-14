@@ -16,7 +16,8 @@ int bintreeDel(bintree* root, int key, void (f)(void*v));
 
 void bintreeErase(bintree * root,void (f)(void*v));
 
-void bintreeForEach(bintree * root,void(f)(int k,void *v,void *arg), void* arg);
+//stops if f returns non zero
+void bintreeForEach(bintree * root,int(f)(int k,void *v,void *arg), void* arg);
 
 int bintreeSize(bintree * root);
 

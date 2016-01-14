@@ -44,13 +44,12 @@ static int proceedPlayerMessage(worklist* w,char msg_type){
 				return 0;
 			}
 			memset(r_r,0,sizeof(room));
-			r_r->token=rand();//token;
+//			r_r->token=rand();//token;
 			r_r->status=ROOM_CREATED;
-			printf("token %d\n",r_r->token);
 			t_semop(t_sem.room,&sem[0],1);		
 				//pl->timestamp=time(0);
 				if (pl->room.id!=0){
-					roomLeave(pl->room.type,pl->room.id);
+					roomLeave(pl->room.id);
 				}
 			t_semop(t_sem.room,&sem[1],1);
 
@@ -59,10 +58,10 @@ static int proceedPlayerMessage(worklist* w,char msg_type){
 			r_r->players.max=2;//change to event players max
 
 			t_semop(t_sem.room,&sem[0],1);
-				room_id=roomAdd(room_type,r_r);
+				room_id=roomAdd(r_r);
 				r_r->id=room_id;
-				pl->room.id=room_id;
-				roomEnter(pl->room.type,pl->room.id);
+				pl->room.id=r_r->id;
+				roomEnter(pl->room.id);
 				r_r->status=ROOM_PREPARE;
 			t_semop(t_sem.room,&sem[1],1);
 			
@@ -86,7 +85,7 @@ static int proceedPlayerMessage(worklist* w,char msg_type){
 				return 0;
 			}
 			t_semop(t_sem.room,&sem[0],1);
-				r_r=roomGet(room_type,room_id);
+				r_r=roomGet(room_id);
 				if (r_r!=0)
 					r_r->timestamp=time(0);
 			t_semop(t_sem.room,&sem[1],1);
@@ -94,7 +93,7 @@ static int proceedPlayerMessage(worklist* w,char msg_type){
 //			pl->timestamp=time(0);
 			if (pl->room.id!=0){
 				t_semop(t_sem.room,&sem[0],1);
-					roomLeave(pl->room.type,pl->room.id);
+					roomLeave(pl->room.id);
 				t_semop(t_sem.room,&sem[1],1);
 			}
 			setMask(pl->bitmask,BM_PLAYER_ROOM);
@@ -104,11 +103,11 @@ static int proceedPlayerMessage(worklist* w,char msg_type){
 				return 0;
 			}
 			
-			pl->room.type=room_type;
+			pl->room.type=room_type; //TODO: remove 
 			pl->room.id=room_id;
 			
 			t_semop(t_sem.room,&sem[0],1);
-				roomEnter(pl->room.type,pl->room.id);
+				roomEnter(pl->room.id);
 			t_semop(t_sem.room,&sem[1],1);
 			
 			pl->room.token=rand();
@@ -199,14 +198,17 @@ static inline int checkPlayerEvents(worklist * w,time_t _timestamp){
 		bintreeDel(&pl->events.droped, e->id, 0);
 		return 0;
 	}
-	void checkEventAvailable(int k, void*v, void* arg){
+	int checkEventAvailable(int k, void*v, void* arg){
 		sendEventChanged(eventGet((long)v));
+		return 0;
 	}
-	void checkEventDroped(int k, void*v, void* arg){
+	int checkEventDroped(int k, void*v, void* arg){
 		sendEventDroped(eventGet((long)v));
+		return 0;
 	}
 	bintree* sent;
-	int checkEvent(void * n_n,event* e){
+	int checkEvent(int k, void *_e, void * n_n){
+		event* e=_e;
 		worklist* w=n_n;
 		player_info * pl=w->data;
 		bintreeDel(sent,e->id,0);
@@ -235,8 +237,9 @@ static inline int checkPlayerEvents(worklist * w,time_t _timestamp){
 			//add events to available;
 /*!*/		eventForEach(w, checkEvent);
 			//drop remained events
-			void checkDrop(int k,void*v,void* arg){
+			int checkDrop(int k,void*v,void* arg){
 				bintreeAdd(arg,k,v);
+				return 0;
 			}
 			bintreeForEach(sent,checkDrop,&pl->events.droped);
 			//clean end free bintree 
@@ -263,7 +266,7 @@ static int checkPlayerRoom(worklist * w, time_t _timestamp){
 		//check room data
 	if (pl->room.id!=0){
 		t_semop(t_sem.room,&sem[0],1);
-		r_r=roomGet(pl->room.type,pl->room.id);
+		r_r=roomGet(pl->room.id);
 		t_semop(t_sem.room,&sem[1],1);
 //		printf("check room %p \n",r_r);
 		if (r_r!=0){
@@ -293,7 +296,7 @@ static int checkPlayerRoom(worklist * w, time_t _timestamp){
 					//need to leave room
 					printf("room fail, leave room\n");
 					t_semop(t_sem.room,&sem[0],1);
-					roomLeave(pl->room.type,pl->room.id);
+					roomLeave(pl->room.id);
 					t_semop(t_sem.room,&sem[1],1);
 					pl->room.id=0;
 					setMask(pl->bitmask,BM_PLAYER_ROOM);
