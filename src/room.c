@@ -1,10 +1,17 @@
 #include "headers.h"
 
+/*
+╔══════════════════════════════════════════════════════════════╗
+║ functions to work with rooms							       ║
+║ created by Dennis Yarikov						                       ║
+║ jan 2016									                       ║
+╚══════════════════════════════════════════════════════════════╝
+*/
 
 static bintree rooms;//global rooms container
 
 //for debug
-int fff (int k,void *v,void *arg) {
+static int fff (int k,void *v,void *arg) {
 	room *r=v;
 	printf("type %d pl cur %d pl max %d\n", r->type, r->players.current, r->players.max);
 	return 0;
@@ -22,7 +29,7 @@ room * roomGet (int key) { //TODO: make this useful
 
 //add room 
 int roomAdd(room * r) {
-	r->id = rand()?:rand();
+	while(!(r->id = rand())); //have not to get 0
 	//TODO: add room to tree of event 
 	eventRoomAdd(r->type);
 	return bintreeAdd(&rooms, r->id, r);

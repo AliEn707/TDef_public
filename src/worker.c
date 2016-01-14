@@ -207,7 +207,8 @@ static inline int checkPlayerEvents(worklist * w,time_t _timestamp){
 		return 0;
 	}
 	bintree* sent;
-	int checkEvent(void * n_n,event* e){
+	int checkEvent(int k, void *_e, void * n_n){
+		event* e=_e;
 		worklist* w=n_n;
 		player_info * pl=w->data;
 		bintreeDel(sent,e->id,0);
