@@ -61,7 +61,7 @@ static int connSendRecv(char * hostname,int port, int token){
 }
 
 
-static int checkRoomStatus(int k,void *v,void *arg){
+static int checkRoomStatus(bintree_key k,void *v,void *arg){
 	room * r=v;
 	float Dt=0.1;
 //	struct {char type;int token;} message;

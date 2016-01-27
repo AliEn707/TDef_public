@@ -54,7 +54,7 @@ int eventRoomDel(int id){
 	return 1;
 }
 
-int eventForEach(void * p, int(f)(int k,void *v,void *arg)){
+int eventForEach(void * p, int(f)(bintree_key k,void *v,void *arg)){
 	bintreeForEach(&events, f, p);
 	return 0;
 }

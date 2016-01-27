@@ -4,7 +4,7 @@
 #include <strings.h>
 #include "main.h"
 
-#define MAX_KEY 1073741823 // if key more for each not works
+//#define MAX_KEY (1<<((8L*sizeof(bintree_key))-2)) // if key more for each not works
 
 /*
 ╔══════════════════════════════════════════════════════════════╗
@@ -14,8 +14,8 @@
 ╚══════════════════════════════════════════════════════════════╝
 */
 
-static int reverseInt(int x){
-	int o;
+static bintree_key reverseKey(bintree_key x){
+	bintree_key o;
 	while (x){
 		o=(o<<1)+(x&1);
 		x>>=1;
@@ -23,14 +23,15 @@ static int reverseInt(int x){
 	return o;
 }
 
-int bintreeAdd(bintree* root,int key,void* data){
+bintree_key bintreeAdd(bintree* root,bintree_key key,void* data){
 	bintree* tmp=root;
-	int next, id=key;
-	if (key>MAX_KEY)
+	int next; 
+	bintree_key id=key;
+	if (data==0)
 		return 0;
 //	printDebug("add key %d\n",key);
 	while(key>0){
-		next=(int)(key&1);
+		next=key&1;
 		if(tmp->next[next]==0){
 			if((tmp->next[next]=malloc(sizeof(bintree)))==0){
 				perror("malloc bintreeAdd");
@@ -47,11 +48,11 @@ int bintreeAdd(bintree* root,int key,void* data){
 	return id;
 }
 
-void * bintreeGet(bintree* root, int key){
+void * bintreeGet(bintree* root, bintree_key key){
 	bintree* tmp=root;
 	int next;
 	while(key>0){
-		next=(int)(key&1);
+		next=key&1;
 		if(tmp->next[next]==0)
 			return 0;
 		tmp=tmp->next[next];
@@ -61,7 +62,7 @@ void * bintreeGet(bintree* root, int key){
 }
 
 //get or add object size of "size"
-void * bintreeFetch(bintree* root,int key,int size){
+void * bintreeFetch(bintree* root,bintree_key key,int size){
 	void * a=bintreeGet(root,key);
 	if (a==0){
 		a=malloc(size);
@@ -70,7 +71,7 @@ void * bintreeFetch(bintree* root,int key,int size){
 	return a;
 }
 
-int _bintreeDel(bintree* root, int key, void (f)(void*v)){
+int _bintreeDel(bintree* root, bintree_key key, void (f)(void*v)){
 	int get;
 	int next;
 	if (root==0)
@@ -101,7 +102,7 @@ int _bintreeDel(bintree* root, int key, void (f)(void*v)){
 	return 0;
 }
 
-int bintreeDel(bintree* root, int key, void (f)(void*v)){
+int bintreeDel(bintree* root, bintree_key key, void (f)(void*v)){
 	int get;
 	int next=key&1;
 	get=_bintreeDel(root->next[next],key>>1,f);
@@ -141,14 +142,14 @@ void bintreeErase(bintree * root,void (f)(void*v)){
 	root->next[1]=0;
 }
 
-static int _bintreeForEach(bintree * root, int(f)(int k, void *v, void *arg), void* arg, int key){
+static int _bintreeForEach(bintree * root, int(f)(bintree_key k, void *v, void *arg), void* arg, bintree_key key){
 	if (root==0)
 		return 0;
 	int i;
 	int o;
-//	printf("\t %d %d %d\n", key,reverseInt(key)>>1,reverseInt(key));
+//	printf("\t %d %d %d\n", key,reverseKey(key)>>1,reverseKey(key));
 	if (root->data!=0)
-		if ((o=f(reverseInt(key)>>1,root->data, arg))!=0)
+		if ((o=f(reverseKey(key)>>1,root->data, arg))!=0)
 			return o;
 	for(i=0;i<2;i++)
 		if ((o=_bintreeForEach(root->next[i],f,arg,(key<<1)+i))!=0)
@@ -156,7 +157,7 @@ static int _bintreeForEach(bintree * root, int(f)(int k, void *v, void *arg), vo
 	return 0;
 }
 
-void bintreeForEach(bintree * root, int(f)(int k, void *v, void *arg), void *arg){
+void bintreeForEach(bintree * root, int(f)(bintree_key k, void *v, void *arg), void *arg){
 	if (root==0)
 		return;
 	_bintreeForEach(root,f,arg,1);
@@ -164,7 +165,7 @@ void bintreeForEach(bintree * root, int(f)(int k, void *v, void *arg), void *arg
 
 int bintreeSize(bintree * root){
 	int i=0;
-	int add(int k, void*v, void* arg){
+	int add(bintree_key k, void*v, void* arg){
 		i++;
 		return 0;
 	}
@@ -176,7 +177,7 @@ int bintreeSize(bintree * root){
 void** bintreeToArray(bintree * root){
 	void** o;
 	int i=bintreeSize(root);
-	int add(int k, void*v, void* arg){
+	int add(bintree_key k, void*v, void* arg){
 		o[i]=v;
 		i++;
 		return 0;
@@ -191,7 +192,7 @@ void** bintreeToArray(bintree * root){
 //get clone of bintree
 bintree* bintreeClone(bintree * root){
 	bintree* o;
-	int add(int k, void*v, void* arg){
+	int add(bintree_key k, void*v, void* arg){
 		bintreeAdd(o,k,v);
 		return 0;
 	}
@@ -220,7 +221,7 @@ int main(){
 	srand(time(0));
 	memset(&r,0,sizeof(r));
 	
-	printf("%u\n",reverseInt(11));
+	printf("%u\n",reverseKey(11));
 	
 	bintreeAdd(&r,1,(void*)1);
 	bintreeAdd(&r,3,(void*)100);

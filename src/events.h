@@ -24,6 +24,6 @@ int eventRoomAdd(int id);
 
 int eventRoomDel(int id);
 
-int eventForEach(void * p, int(f)(int k,void *v,void *arg));
+int eventForEach(void * p, int(f)(bintree_key k,void *v,void *arg));
 
 int eventErase();

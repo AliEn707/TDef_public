@@ -17,4 +17,4 @@ int roomLeave(int id);
 
 room* roomEnter(int id);
 
-int roomCheckAll(int(f)(int k,void *v,void *arg));
+int roomCheckAll(int(f)(bintree_key k,void *v,void *arg));

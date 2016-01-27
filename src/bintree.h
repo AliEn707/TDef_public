@@ -5,19 +5,20 @@ struct bintree{
 	struct bintree * next[2];
 } bintree;
 
+typedef long long bintree_key;
 
-int bintreeAdd(bintree* root,int key,void* data);
+bintree_key bintreeAdd(bintree* root, bintree_key key,void* data);
 
-void * bintreeGet(bintree* root, int key);
+void * bintreeGet(bintree* root, bintree_key key);
 
-void * bintreeFetch(bintree* root,int key,int size);
+void * bintreeFetch(bintree* root, bintree_key key,int size);
 
-int bintreeDel(bintree* root, int key, void (f)(void*v));
+int bintreeDel(bintree* root, bintree_key key, void (f)(void*v));
 
 void bintreeErase(bintree * root,void (f)(void*v));
 
 //stops if f returns non zero
-void bintreeForEach(bintree * root,int(f)(int k,void *v,void *arg), void* arg);
+void bintreeForEach(bintree * root,int(f)(bintree_key k,void *v,void *arg), void* arg);
 
 int bintreeSize(bintree * root);
 

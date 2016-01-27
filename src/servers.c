@@ -70,7 +70,7 @@ int serversGetNum(){
 int * serversGetSort(){
 	static int s_s[MAX_SERVERS+1];
 	int j=0;
-	int addServ(int id,void*v,void* arg){
+	int addServ(bintree_key id,void*v,void* arg){
 		server * s=v;
 		if (s->status>0)
 			s_s[j++]=s->id;

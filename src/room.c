@@ -11,7 +11,7 @@
 static bintree rooms;//global rooms container
 
 //for debug
-static int fff (int k,void *v,void *arg) {
+static int fff (bintree_key k,void *v,void *arg) {
 	room *r=v;
 	printf("type %d pl cur %d pl max %d\n", r->type, r->players.current, r->players.max);
 	return 0;
@@ -64,7 +64,7 @@ room * roomRem(int key) {
 int roomFind(int key) {//ADD: param to search - free slots
 	int f=0;
 	//TODO: add find event, then find room from it
-	int action(int k,void *v,void *arg){
+	int action(bintree_key k,void *v,void *arg){
 		room *r=v;
 		if (r->type==key){
 			f=k;
@@ -123,7 +123,7 @@ room* roomEnter(int id){
 	return room;
 }
 
-int roomCheckAll(int(f)(int k,void *v,void *arg)) {
+int roomCheckAll(int(f)(bintree_key k,void *v,void *arg)) {
 	bintreeForEach(&rooms, f, 0);
 	return 0;
 }
